@@ -802,16 +802,16 @@
   }
 
   /* Branch-tree bracket */
-  .tree-scroll { overflow-x: auto; padding: 0.5rem 0 1.5rem; }
+  .tree-scroll { overflow-x: auto; padding: 0.5rem 0 1.5rem; -webkit-overflow-scrolling: touch; }
   .tree-legend {
     font-size: 11px; color: var(--text-secondary); text-align: center;
     margin-bottom: 1rem; line-height: 1.5;
   }
   .tree-grid {
-    display: flex; align-items: stretch; gap: 8px;
-    min-width: 1100px; justify-content: center;
+    display: flex; align-items: stretch; gap: 6px;
+    width: max-content; margin: 0 auto; padding: 0 4px;
   }
-  .tree-colwrap { display: flex; flex-direction: column; }
+  .tree-colwrap { display: flex; flex-direction: column; flex: 0 0 auto; }
   .tree-h {
     text-align: center; font-size: 11px; font-weight: 700;
     color: var(--text-muted); text-transform: uppercase;
@@ -820,28 +820,29 @@
   .tree-col {
     display: flex; flex-direction: column;
     justify-content: space-around; flex: 1; gap: 6px;
-    min-width: 130px;
   }
-  .tree-col.r32 { min-width: 150px; }
+  /* 各輪欄寬：32強最寬，往中央遞減 */
+  .tree-colwrap:nth-child(1) .tree-col, .tree-colwrap:nth-last-child(1) .tree-col { width: 124px; }
+  .tree-colwrap:nth-child(2) .tree-col, .tree-colwrap:nth-last-child(2) .tree-col { width: 112px; }
+  .tree-colwrap:nth-child(3) .tree-col, .tree-colwrap:nth-last-child(3) .tree-col { width: 112px; }
+  .tree-colwrap:nth-child(4) .tree-col, .tree-colwrap:nth-last-child(4) .tree-col { width: 112px; }
 
   .bx {
     background: var(--pitch-card); border: 1px solid var(--pitch-border);
     border-radius: 7px; overflow: hidden; font-size: 11px;
   }
-  .bx.empty { opacity: 0.5; }
   .bx-slot {
     display: flex; align-items: center; justify-content: space-between;
-    padding: 5px 8px; gap: 6px;
+    padding: 5px 7px; gap: 5px; min-height: 26px;
   }
   .bx-slot + .bx-slot { border-top: 1px solid var(--pitch-border); }
-  .bx-slot.tbd { color: var(--text-dim); justify-content: center; padding: 8px; }
+  .bx-slot.tbd { color: var(--text-muted); }
+  .bx-slot.tbd .bx-team { font-size: 10px; }
   .bx-team { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
   .bx-score { font-weight: 700; color: var(--text-secondary); flex-shrink: 0; }
   .bx-slot.win { background: #14321f; }
   .bx-slot.win .bx-team { color: var(--gold); font-weight: 700; }
   .bx-slot.win .bx-score { color: var(--gold); }
-  .bx-sub { font-size: 9px; color: var(--text-muted); }
-  .bx-prov { font-size: 9px; color: var(--amber); }
   .bx-meta {
     font-size: 9px; color: var(--text-dim); text-align: center;
     padding: 2px 4px; background: var(--pitch-surface);
@@ -850,14 +851,10 @@
 
   .tree-champ {
     justify-content: center; align-items: center;
-    min-width: 150px; padding: 0 6px;
+    width: 150px; padding: 0 6px;
   }
-  .tree-champ .bx { width: 140px; border-color: var(--gold-dim);
+  .tree-champ .bx { width: 142px; border-color: var(--gold-dim);
     background: linear-gradient(135deg, #1a3a22, #0f2517); }
-
-  @media (max-width: 700px) {
-    .bx-en, .bx-sub { display: none; }
-  }
 
 </style>
 </head>
@@ -1499,97 +1496,103 @@ function renderBracket() {
     if (key) groupMap[key] = g.table || [];
   });
   // 取得某組第 n 名球隊（1=冠軍,2=亞軍）
-  // 只有當該組「全部 4 隊都踢滿 3 場」時，名次才算確定，才填入對戰框；否則回傳 null 顯示「待定」
+  // 只有當該組「全部 4 隊都踢滿 3 場」時，名次才算確定，才填入對戰框；否則回傳 null（顯示來源標籤）
   const seed = (letter, pos) => {
     const rows = groupMap[letter] || [];
     if (rows.length < 4) return null;
     const groupComplete = rows.every(x => (x.playedGames || 0) >= 3);
-    if (!groupComplete) return null; // 小組賽未踢完，不預先填入
+    if (!groupComplete) return null;
     const r = rows.find(x => x.position === pos);
-    if (r) return { name:r.team.name, crest:r.team.crest, locked:true };
-    return null;
+    return r ? { name:r.team.name, crest:r.team.crest } : null;
   };
-  const W = (l) => seed(l,1);  // 組首
-  const R = (l) => seed(l,2);  // 組次
-  const T3 = (label) => ({ name:'第三名', sub:label, crest:'🏳️', third:true }); // 最佳第三名待定
+  const W = (l) => seed(l,1);
+  const R = (l) => seed(l,2);
 
-  // 官方 32 強對戰結構（Match 73–88）。aLabel/bLabel 為位置來源，未確定前顯示
-  const R32 = [
-    // 左半
-    { m:74, venue:'波士頓', a:W('E'),  b:T3('A/B/C/D/F'), aLabel:'E 組冠軍' },
-    { m:77, venue:'紐約',   a:W('I'),  b:T3('C/D/F/G/H'), aLabel:'I 組冠軍' },
-    { m:73, venue:'洛杉磯', a:R('A'),  b:R('B'), aLabel:'A 組亞軍', bLabel:'B 組亞軍' },
-    { m:79, venue:'墨西哥城', a:W('A'), b:T3('C/E/F/H/I'), aLabel:'A 組冠軍' },
-    { m:75, venue:'瓜達盧佩', a:W('F'), b:R('C'), aLabel:'F 組冠軍', bLabel:'C 組亞軍' },
-    { m:76, venue:'休士頓', a:W('C'),  b:R('F'), aLabel:'C 組冠軍', bLabel:'F 組亞軍' },
-    { m:78, venue:'達拉斯', a:R('E'),  b:R('I'), aLabel:'E 組亞軍', bLabel:'I 組亞軍' },
-    { m:80, venue:'亞特蘭大', a:W('L'), b:T3('E/H/I/J/K'), aLabel:'L 組冠軍' },
-    // 右半
-    { m:82, venue:'西雅圖', a:W('G'),  b:T3('A/E/H/I/J'), aLabel:'G 組冠軍' },
-    { m:85, venue:'溫哥華', a:W('B'),  b:T3('E/F/G/I/J'), aLabel:'B 組冠軍' },
-    { m:83, venue:'多倫多', a:R('K'),  b:R('L'), aLabel:'K 組亞軍', bLabel:'L 組亞軍' },
-    { m:87, venue:'堪薩斯城', a:W('K'), b:T3('D/E/I/J/L'), aLabel:'K 組冠軍' },
-    { m:81, venue:'舊金山', a:W('D'),  b:T3('B/E/F/I/J'), aLabel:'D 組冠軍' },
-    { m:84, venue:'洛杉磯', a:W('H'),  b:R('J'), aLabel:'H 組冠軍', bLabel:'J 組亞軍' },
-    { m:86, venue:'邁阿密', a:W('J'),  b:R('H'), aLabel:'J 組冠軍', bLabel:'H 組亞軍' },
-    { m:88, venue:'達拉斯', a:R('D'),  b:R('G'), aLabel:'D 組亞軍', bLabel:'G 組亞軍' },
+  // 官方 32 強對戰（依 FIFA 賽程 M73–M88），順序已按淘汰賽分支樹排列，
+  // 使相鄰兩場恰好晉級同一場 16 強。aLabel/bLabel 為位置來源（未確定前顯示）。
+  // 左半（最終匯入左半 4 強 M101）
+  const leftR32 = [
+    { m:74, venue:'波士頓',   a:W('E'), aLabel:'E 組冠軍', b:null, bLabel:'A/B/C/D/F 最佳第三' },
+    { m:77, venue:'紐約',     a:W('I'), aLabel:'I 組冠軍', b:null, bLabel:'C/D/F/G/H 最佳第三' },
+    { m:73, venue:'洛杉磯',   a:R('A'), aLabel:'A 組亞軍', b:R('B'), bLabel:'B 組亞軍' },
+    { m:75, venue:'瓜達盧佩', a:W('F'), aLabel:'F 組冠軍', b:R('C'), bLabel:'C 組亞軍' },
+    { m:83, venue:'多倫多',   a:R('K'), aLabel:'K 組亞軍', b:R('L'), bLabel:'L 組亞軍' },
+    { m:84, venue:'洛杉磯',   a:W('H'), aLabel:'H 組冠軍', b:R('J'), bLabel:'J 組亞軍' },
+    { m:81, venue:'舊金山',   a:W('D'), aLabel:'D 組冠軍', b:null, bLabel:'B/E/F/I/J 最佳第三' },
+    { m:82, venue:'西雅圖',   a:W('G'), aLabel:'G 組冠軍', b:null, bLabel:'A/E/H/I/J 最佳第三' },
+  ];
+  // 右半（最終匯入右半 4 強 M102）
+  const rightR32 = [
+    { m:76, venue:'休士頓',   a:W('C'), aLabel:'C 組冠軍', b:R('F'), bLabel:'F 組亞軍' },
+    { m:78, venue:'達拉斯',   a:R('E'), aLabel:'E 組亞軍', b:R('I'), bLabel:'I 組亞軍' },
+    { m:79, venue:'墨西哥城', a:W('A'), aLabel:'A 組冠軍', b:null, bLabel:'C/E/F/H/I 最佳第三' },
+    { m:80, venue:'亞特蘭大', a:W('L'), aLabel:'L 組冠軍', b:null, bLabel:'E/H/I/J/K 最佳第三' },
+    { m:86, venue:'邁阿密',   a:W('J'), aLabel:'J 組冠軍', b:R('H'), bLabel:'H 組亞軍' },
+    { m:88, venue:'達拉斯',   a:R('D'), aLabel:'D 組亞軍', b:R('G'), bLabel:'G 組亞軍' },
+    { m:85, venue:'溫哥華',   a:W('B'), aLabel:'B 組冠軍', b:null, bLabel:'E/F/G/I/J 最佳第三' },
+    { m:87, venue:'堪薩斯城', a:W('K'), aLabel:'K 組冠軍', b:null, bLabel:'D/E/I/J/L 最佳第三' },
   ];
 
-  // 一個對戰框（可帶比分）
-  const matchBox = (mt, side) => {
-    if (!mt) return `<div class="bx empty"><div class="bx-slot tbd">待定</div><div class="bx-slot tbd">待定</div></div>`;
-    const slot = (team, sc, win, seedLabel) => {
-      // 尚未確定的位置：顯示來源（如「A 組冠軍」），而非空白「待定」
-      if (!team) return `<div class="bx-slot tbd">${seedLabel || '待定'}</div>`;
-      const nm = team.third ? `第三名 <span class="bx-sub">${team.sub}</span>`
-                : `${team.crest||''} ${team.name}`;
+  // 後續輪次的對戰來源（勝者來自哪兩場），未開打前顯示「Mxx 勝者」
+  const leftR16  = [ {m:89,f:[74,77]}, {m:90,f:[73,75]}, {m:93,f:[83,84]}, {m:94,f:[81,82]} ];
+  const rightR16 = [ {m:91,f:[76,78]}, {m:92,f:[79,80]}, {m:95,f:[86,88]}, {m:96,f:[85,87]} ];
+  const leftQF   = [ {m:97,f:[89,90]}, {m:98,f:[93,94]} ];
+  const rightQF  = [ {m:99,f:[91,92]}, {m:100,f:[95,96]} ];
+  const leftSF   = [ {m:101,f:[97,98]} ];
+  const rightSF  = [ {m:102,f:[99,100]} ];
+
+  // 一個對戰框（R32：可能已有隊伍/比分；後續輪次：顯示來源）
+  const slot = (team, label, sc, win) => {
+    if (team) {
       return `<div class="bx-slot ${win?'win':''}">
-        <span class="bx-team">${nm}</span>
+        <span class="bx-team">${team.crest||''} ${team.name}</span>
         <span class="bx-score">${sc??''}</span>
       </div>`;
-    };
+    }
+    return `<div class="bx-slot tbd"><span class="bx-team">${label||'待定'}</span></div>`;
+  };
+  const matchBox = (mt) => {
+    if (!mt) return '';
     const hasScore = mt.score && mt.score.length === 2;
     const aWin = hasScore && mt.score[0] > mt.score[1];
     const bWin = hasScore && mt.score[1] > mt.score[0];
     return `<div class="bx">
-      ${slot(mt.a, hasScore?mt.score[0]:null, aWin, mt.aLabel)}
-      ${slot(mt.b, hasScore?mt.score[1]:null, bWin, mt.bLabel)}
-      <div class="bx-meta">M${mt.m} · ${mt.venue}</div>
+      ${slot(mt.a, mt.aLabel, hasScore?mt.score[0]:null, aWin)}
+      ${slot(mt.b, mt.bLabel, hasScore?mt.score[1]:null, bWin)}
+      <div class="bx-meta">M${mt.m}${mt.venue?' · '+mt.venue:''}</div>
     </div>`;
   };
+  // 後續輪次的框（依來源場次自動產生標籤）
+  const futureBox = (mt) => matchBox({ m:mt.m, aLabel:`M${mt.f[0]} 勝者`, bLabel:`M${mt.f[1]} 勝者` });
 
-  const half = (arr) => `<div class="tree-col r32">${arr.map(m=>matchBox(m)).join('')}</div>`;
-  const emptyCol = (n, cls) => `<div class="tree-col ${cls}">${Array.from({length:n}).map(()=>matchBox(null)).join('')}</div>`;
-
-  const leftR32 = R32.slice(0,8);
-  const rightR32 = R32.slice(8,16);
+  const col = (label, items, boxFn) =>
+    `<div class="tree-colwrap"><div class="tree-h">${label}</div>
+      <div class="tree-col">${items.map(boxFn).join('')}</div></div>`;
 
   const html = `<div class="tree-scroll">
-    <div class="tree-legend">📋 各框顯示晉級來源（如「A 組冠軍」）· 該組 3 場全部踢完後才填入確定隊伍 · 淘汰賽完賽顯示比分</div>
+    <div class="tree-legend">📋 各框顯示晉級來源 · 該組 3 場踢完後填入確定隊伍 · 後續輪次顯示「Mxx 勝者」· 完賽顯示比分</div>
     <div class="tree-grid">
-      <!-- 左半 -->
-      <div class="tree-colwrap"><div class="tree-h">32 強</div>${half(leftR32)}</div>
-      <div class="tree-colwrap"><div class="tree-h">16 強</div>${emptyCol(4,'r16')}</div>
-      <div class="tree-colwrap"><div class="tree-h">8 強</div>${emptyCol(2,'qf')}</div>
-      <div class="tree-colwrap"><div class="tree-h">4 強</div>${emptyCol(1,'sf')}</div>
-      <!-- 中央冠軍 -->
+      ${col('32 強', leftR32, matchBox)}
+      ${col('16 強', leftR16, futureBox)}
+      ${col('8 強', leftQF, futureBox)}
+      ${col('4 強', leftSF, futureBox)}
       <div class="tree-colwrap tree-champ">
         <div class="trophy-icon">🏆</div>
         <div class="trophy-label">FIFA WORLD CUP</div>
-        <div class="tree-h" style="margin-top:8px">冠軍戰</div>
-        ${matchBox(null)}
+        <div class="tree-h" style="margin-top:8px">冠軍戰 M104</div>
+        ${futureBox({m:104,f:[101,102]})}
         <div class="champion-box"><div style="font-size:1.6rem">👑</div><div class="champion-tbd">冠軍待定</div></div>
+        <div style="font-size:10px;color:var(--text-dim);margin-top:6px;text-align:center">季軍戰 M103<br>（M101 敗者 vs M102 敗者）</div>
       </div>
-      <!-- 右半 -->
-      <div class="tree-colwrap"><div class="tree-h">4 強</div>${emptyCol(1,'sf')}</div>
-      <div class="tree-colwrap"><div class="tree-h">8 強</div>${emptyCol(2,'qf')}</div>
-      <div class="tree-colwrap"><div class="tree-h">16 強</div>${emptyCol(4,'r16')}</div>
-      <div class="tree-colwrap"><div class="tree-h">32 強</div>${half(rightR32)}</div>
+      ${col('4 強', rightSF, futureBox)}
+      ${col('8 強', rightQF, futureBox)}
+      ${col('16 強', rightR16, futureBox)}
+      ${col('32 強', rightR32, matchBox)}
     </div>
     <div class="bracket-note">
-      🏟️ 32 強對戰組合依 FIFA 官方賽程（M73–M88）排定<br>
-      各框先顯示晉級來源（如「A 組冠軍」），<strong>等該組 3 場小組賽全部踢完、名次確定後才會填入隊伍</strong><br>
-      淘汰賽 6/28 開打：32強 → 16強 → 8強 → 4強 → 冠軍戰（7/19 紐澤西 MetLife 球場）
+      🏟️ 對戰組合依 FIFA 官方賽程（32強 M73–M88、16強 M89–M96、8強 M97–M100、4強 M101–M102、冠軍戰 M104）<br>
+      各框先顯示晉級來源，<strong>該組 3 場小組賽全部踢完、名次確定後才填入隊伍</strong><br>
+      淘汰賽 6/28 開打，冠軍戰 7/19 於紐澤西 MetLife 球場
     </div>
   </div>`;
   document.getElementById('bracketView').innerHTML = html;
