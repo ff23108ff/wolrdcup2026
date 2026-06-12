@@ -237,6 +237,11 @@
     flex: 1;
   }
   .team-info.right { justify-content: flex-end; text-align: right; }
+  .team-info.team-clickable { border-radius: 8px; padding: 4px 6px; margin: -4px -6px; transition: background 0.15s; }
+  .team-info.team-clickable:hover { background: var(--pitch-surface); }
+  .team-info.team-clickable:hover .team-name { color: var(--gold); }
+  .squad-hint { color: var(--gold-dim); font-weight: 700; font-size: 13px; }
+  .team-info.team-clickable:hover .squad-hint { color: var(--gold); }
   .team-flag { font-size: 1.5rem; }
   .team-name { font-size: 14px; font-weight: 600; }
   .team-name-short { font-size: 12px; color: var(--text-secondary); }
@@ -608,6 +613,252 @@
     cursor: pointer;
     white-space: nowrap;
   }
+  /* Squad styles */
+  .squad-team-selector {
+    display: flex; flex-wrap: wrap; gap: 8px;
+    margin-bottom: 1rem;
+  }
+  .team-select-btn {
+    display: flex; align-items: center; gap: 6px;
+    background: var(--pitch-card);
+    border: 1px solid var(--pitch-border);
+    border-radius: 8px;
+    padding: 7px 12px;
+    color: var(--text-secondary);
+    font-size: 13px; cursor: pointer;
+    transition: all 0.18s;
+  }
+  .team-select-btn:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .team-select-btn.active { background: #1e4a28; border-color: var(--green-bright); color: #fff; }
+
+  .squad-header {
+    display: flex; align-items: center; gap: 14px;
+    background: var(--pitch-card);
+    border: 1px solid var(--pitch-border);
+    border-radius: 12px; padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .squad-flag { font-size: 2.8rem; }
+  .squad-team-name { font-size: 1.3rem; font-weight: 700; color: var(--gold); }
+  .squad-team-meta { font-size: 13px; color: var(--text-secondary); margin-top: 2px; }
+  .squad-stats-bar {
+    display: flex; gap: 18px; margin-top: 6px; flex-wrap: wrap;
+  }
+  .squad-stat { text-align: center; }
+  .squad-stat-n { font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+  .squad-stat-l { font-size: 11px; color: var(--text-muted); }
+
+  .pos-section-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.09em; margin: 1rem 0 0.5rem;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .players-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    gap: 10px; margin-bottom: 0.5rem;
+  }
+  .player-card {
+    background: var(--pitch-card);
+    border: 1px solid var(--pitch-border);
+    border-radius: 10px; overflow: hidden;
+    cursor: pointer; transition: all 0.18s;
+  }
+  .player-card:hover { border-color: var(--gold-dim); transform: translateY(-2px); }
+  .player-photo {
+    width: 100%; aspect-ratio: 1/1;
+    object-fit: cover; object-position: top center;
+    background: var(--pitch-surface);
+    display: block;
+  }
+  .player-photo-placeholder {
+    width: 100%; aspect-ratio: 1/1;
+    background: var(--pitch-surface);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem; color: var(--pitch-border);
+  }
+  .player-card-body { padding: 8px 10px; }
+  .player-card-num {
+    font-size: 10px; font-weight: 700;
+    color: var(--gold); margin-bottom: 2px;
+  }
+  .player-card-name { font-size: 13px; font-weight: 600; line-height: 1.3; }
+  .player-card-club {
+    font-size: 11px; color: var(--text-secondary);
+    margin-top: 2px; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .player-card-stats {
+    display: flex; gap: 8px; margin-top: 5px;
+  }
+  .pcs { font-size: 11px; color: var(--text-muted); }
+  .pcs span { color: var(--text-primary); font-weight: 600; }
+
+  /* Player modal */
+  .player-modal-bg {
+    position: fixed; inset: 0; z-index: 500;
+    background: rgba(0,0,0,0.75);
+    display: flex; align-items: flex-start;
+    justify-content: center; padding: 2rem 1rem;
+    overflow-y: auto;
+  }
+  .player-modal-bg.hidden { display: none; }
+  .player-modal {
+    background: var(--pitch-card);
+    border: 1px solid var(--pitch-border);
+    border-radius: 14px; width: 100%; max-width: 480px;
+    overflow: hidden; position: relative;
+  }
+  .modal-close {
+    position: absolute; top: 10px; right: 12px;
+    background: var(--pitch-surface);
+    border: 1px solid var(--pitch-border);
+    border-radius: 6px; padding: 4px 10px;
+    color: var(--text-secondary); cursor: pointer;
+    font-size: 14px; z-index: 10;
+  }
+  .modal-hero {
+    display: flex; gap: 1rem;
+    padding: 1.25rem; border-bottom: 1px solid var(--pitch-border);
+    align-items: flex-start;
+  }
+  .modal-photo {
+    width: 90px; height: 90px;
+    border-radius: 10px; object-fit: cover; object-position: top;
+    background: var(--pitch-surface); flex-shrink: 0;
+  }
+  .modal-photo-ph {
+    width: 90px; height: 90px;
+    border-radius: 10px;
+    background: var(--pitch-surface);
+    display: flex; align-items: center;
+    justify-content: center; font-size: 2.5rem; flex-shrink: 0;
+  }
+  .modal-name { font-size: 1.1rem; font-weight: 700; }
+  .modal-meta { font-size: 13px; color: var(--text-secondary); margin-top: 3px; line-height: 1.6; }
+  .modal-body { padding: 1rem 1.25rem; }
+  .modal-section-title {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.08em; margin: 0.75rem 0 0.4rem;
+  }
+  .season-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .season-table th {
+    color: var(--text-muted); font-size: 11px; font-weight: 500;
+    text-align: right; padding: 4px 6px; border-bottom: 1px solid var(--pitch-border);
+  }
+  .season-table th:first-child { text-align: left; }
+  .season-table td { padding: 6px 6px; text-align: right; border-top: 1px solid #1a2e1d; }
+  .season-table td:first-child { text-align: left; color: var(--text-secondary); }
+  .modal-ai-bio {
+    background: var(--pitch-surface);
+    border-radius: 8px; padding: 0.75rem;
+    font-size: 13px; line-height: 1.7;
+    color: var(--text-secondary); margin-top: 0.5rem;
+    white-space: pre-wrap;
+  }
+  .team-en { font-size: 10px; color: var(--text-muted); font-weight: 400; display: block; margin-top: 1px; }
+
+  /* Schedule table */
+  .sched-day { margin-bottom: 1.25rem; }
+  .sched-day-head {
+    font-size: 13px; font-weight: 700; color: var(--gold);
+    padding: 6px 0; border-bottom: 1px solid var(--pitch-border);
+    margin-bottom: 0.5rem; position: sticky; top: 56px;
+    background: var(--pitch-dark); z-index: 5;
+  }
+  .sched-row {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--pitch-card); border: 1px solid var(--pitch-border);
+    border-radius: 8px; padding: 8px 12px; margin-bottom: 6px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .sched-row:hover { border-color: var(--gold-dim); }
+  .sched-badge {
+    font-size: 10px; font-weight: 700; color: var(--text-muted);
+    background: var(--pitch-surface); border-radius: 4px;
+    padding: 2px 6px; white-space: nowrap; min-width: 64px; text-align: center;
+  }
+  .sched-teams { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 13px; }
+  .sched-side { flex: 1; }
+  .sched-side.home { text-align: right; }
+  .sched-vs { font-size: 11px; color: var(--text-muted); min-width: 56px; text-align: center; }
+  .sched-time-tw { font-size: 11px; color: var(--text-secondary); white-space: nowrap; }
+  .sched-score { font-weight: 800; color: var(--gold); font-variant-numeric: tabular-nums; }
+
+  /* Bracket trophy + champion */
+  .trophy-icon { font-size: 3rem; filter: drop-shadow(0 0 12px rgba(240,180,41,0.5)); }
+  .trophy-label { font-size: 12px; color: var(--gold); font-weight: 700; margin-top: 2px; letter-spacing: 0.05em; }
+  .champion-box {
+    text-align: center; padding: 0.8rem;
+    background: var(--pitch-card); border: 1px solid var(--gold);
+    border-radius: 10px; margin-top: 0.5rem; width: 100%;
+  }
+  .champion-tbd { font-size: 13px; color: var(--text-muted); }
+  .bracket-note {
+    text-align: center; font-size: 12px; color: var(--text-muted);
+    margin-top: 1.25rem; line-height: 1.7;
+  }
+
+  /* Branch-tree bracket */
+  .tree-scroll { overflow-x: auto; padding: 0.5rem 0 1.5rem; }
+  .tree-legend {
+    font-size: 11px; color: var(--text-secondary); text-align: center;
+    margin-bottom: 1rem; line-height: 1.5;
+  }
+  .tree-grid {
+    display: flex; align-items: stretch; gap: 8px;
+    min-width: 1100px; justify-content: center;
+  }
+  .tree-colwrap { display: flex; flex-direction: column; }
+  .tree-h {
+    text-align: center; font-size: 11px; font-weight: 700;
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.05em; margin-bottom: 8px; min-height: 14px;
+  }
+  .tree-col {
+    display: flex; flex-direction: column;
+    justify-content: space-around; flex: 1; gap: 6px;
+    min-width: 130px;
+  }
+  .tree-col.r32 { min-width: 150px; }
+
+  .bx {
+    background: var(--pitch-card); border: 1px solid var(--pitch-border);
+    border-radius: 7px; overflow: hidden; font-size: 11px;
+  }
+  .bx.empty { opacity: 0.5; }
+  .bx-slot {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 5px 8px; gap: 6px;
+  }
+  .bx-slot + .bx-slot { border-top: 1px solid var(--pitch-border); }
+  .bx-slot.tbd { color: var(--text-dim); justify-content: center; padding: 8px; }
+  .bx-team { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; }
+  .bx-score { font-weight: 700; color: var(--text-secondary); flex-shrink: 0; }
+  .bx-slot.win { background: #14321f; }
+  .bx-slot.win .bx-team { color: var(--gold); font-weight: 700; }
+  .bx-slot.win .bx-score { color: var(--gold); }
+  .bx-sub { font-size: 9px; color: var(--text-muted); }
+  .bx-prov { font-size: 9px; color: var(--amber); }
+  .bx-meta {
+    font-size: 9px; color: var(--text-dim); text-align: center;
+    padding: 2px 4px; background: var(--pitch-surface);
+    border-top: 1px solid var(--pitch-border);
+  }
+
+  .tree-champ {
+    justify-content: center; align-items: center;
+    min-width: 150px; padding: 0 6px;
+  }
+  .tree-champ .bx { width: 140px; border-color: var(--gold-dim);
+    background: linear-gradient(135deg, #1a3a22, #0f2517); }
+
+  @media (max-width: 700px) {
+    .bx-en, .bx-sub { display: none; }
+  }
+
 </style>
 </head>
 <body>
@@ -641,8 +892,11 @@
 <nav class="nav">
   <button class="nav-btn active" onclick="showTab('matches')" data-tab="matches">⚡ 即時賽事</button>
   <button class="nav-btn" onclick="showTab('standings')" data-tab="standings">📊 積分榜</button>
+  <button class="nav-btn" onclick="showTab('schedule')" data-tab="schedule">📅 賽程總表</button>
+  <button class="nav-btn" onclick="showTab('bracket')" data-tab="bracket">🏆 淘汰賽圖</button>
   <button class="nav-btn" onclick="showTab('odds')" data-tab="odds">💰 運彩賠率</button>
   <button class="nav-btn" onclick="showTab('injuries')" data-tab="injuries">🏥 傷兵情報</button>
+  <button class="nav-btn" onclick="showTab('squads')" data-tab="squads">👥 球隊名單</button>
   <button class="nav-btn" onclick="showTab('ai')" data-tab="ai">🤖 AI 分析</button>
   <button class="nav-btn" onclick="showTab('settings')" data-tab="settings">⚙️ 設定</button>
 </nav>
@@ -666,6 +920,7 @@
       <button class="filter-btn active" onclick="filterMatches('all',this)">全部</button>
       <button class="filter-btn" onclick="filterMatches('live',this)">🔴 進行中</button>
       <button class="filter-btn" onclick="filterMatches('today',this)">今日</button>
+      <button class="filter-btn" onclick="filterMatches('tomorrow',this)">🌅 明日</button>
       <button class="filter-btn" onclick="filterMatches('upcoming',this)">即將開賽</button>
     </div>
     <div id="matchesList"><div class="loading-card"><span class="spinner"></span> 載入賽事資料中...</div></div>
@@ -677,9 +932,22 @@
     <div id="standingsList"><div class="loading-card"><span class="spinner"></span> 載入積分榜中...</div></div>
   </div>
 
+  <!-- SCHEDULE (full fixtures table) -->
+  <div class="section" id="section-schedule">
+    <div class="section-label">完整賽程總表</div>
+    <div class="filter-row" id="scheduleFilters"></div>
+    <div id="scheduleList"><div class="loading-card"><span class="spinner"></span> 載入賽程中...</div></div>
+  </div>
+
+  <!-- BRACKET (knockout tree) -->
+  <div class="section" id="section-bracket">
+    <div class="section-label">淘汰賽對戰圖 · 32 強 → 冠軍</div>
+    <div id="bracketView"><div class="loading-card"><span class="spinner"></span> 載入對戰圖中...</div></div>
+  </div>
+
   <!-- ODDS -->
   <div class="section" id="section-odds">
-    <div class="api-key-notice">⚠️ 台灣運彩賠率需要連線至公開資料源，以下顯示代表性賠率示範及 AI 賠率分析</div>
+    <div class="api-key-notice">💡 賠率為代表性示範資料。台灣運彩無公開 API，可搭配下方「AI 分析」解讀盤口</div>
     <div class="section-label">賠率追蹤（台灣運彩 / 國際盤口）</div>
     <div id="oddsList"><div class="loading-card"><span class="spinner"></span> 載入賠率中...</div></div>
   </div>
@@ -693,6 +961,12 @@
       <button class="filter-btn" onclick="filterInjuries('return',this)">✅ 傷癒回歸</button>
     </div>
     <div id="injuriesList"><div class="loading-card"><span class="spinner"></span> 載入傷兵資料中...</div></div>
+  </div>
+
+  <!-- SQUADS -->
+  <div class="section" id="section-squads">
+    <div class="squad-team-selector" id="squadTeamSelector"></div>
+    <div id="squadContent"><div class="loading-card"><span class="spinner"></span> 載入球隊資料中...</div></div>
   </div>
 
   <!-- AI ANALYSIS -->
@@ -746,8 +1020,8 @@
       </div>
       <div style="margin-top:0.75rem;padding:0.75rem;background:var(--pitch-surface);border-radius:8px;font-size:12px;color:var(--text-muted);line-height:1.7;">
         📋 申請方式：<br>
-        • <strong style="color:var(--text-secondary)">football-data.org</strong>：免費申請，支援世界盃即時比分<br>
-        • <strong style="color:var(--text-secondary)">Anthropic API</strong>：claude.ai/settings 取得，AI 分析所需
+        • <strong style="color:var(--text-secondary)">football-data.org</strong>：免費版即包含世界盃(WC)即時比分與積分榜，限每分鐘10次請求。<strong style="color:var(--gold)">必須有金鑰</strong>，無金鑰時 API 會回傳空資料。瀏覽器直連若被 CORS 擋下，App 會自動切換 proxy 中繼<br>
+        • <strong style="color:var(--text-secondary)">Anthropic API</strong>：console.anthropic.com 取得，AI 分析與球員介紹所需
       </div>
     </div>
     <div class="card">
@@ -802,7 +1076,7 @@ function checkPw(){
 // ===== State =====
 const state = {
   matches: [],
-  standings: {},
+  standings: [],
   injuries: [],
   odds: [],
   matchFilter: 'all',
@@ -834,9 +1108,12 @@ function showTab(tab) {
   document.getElementById('section-' + tab).classList.add('active');
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
   if (tab === 'matches' && state.matches.length === 0) loadMatches();
-  if (tab === 'standings' && Object.keys(state.standings).length === 0) loadStandings();
+  if (tab === 'standings' && (!state.standings || state.standings.length === 0)) loadStandings();
   if (tab === 'odds' && state.odds.length === 0) loadOdds();
   if (tab === 'injuries' && state.injuries.length === 0) loadInjuries();
+  if (tab === 'squads' && !document.querySelector('.team-select-btn')) initSquads();
+  if (tab === 'schedule') renderSchedule();
+  if (tab === 'bracket') renderBracket();
 }
 
 // ===== Refresh =====
@@ -855,14 +1132,24 @@ function updateRefreshInterval() {
 }
 
 // ===== Football Data API =====
+// 注意：football-data.org 免費版包含世界盃(WC)，但 API 不允許瀏覽器跨域(CORS)直連，
+// 因此先嘗試直連，失敗時自動透過 CORS proxy 中繼。
 async function fetchFootballData(endpoint) {
   const key = state.apiKeys.football;
-  const headers = key ? { 'X-Auth-Token': key } : {};
+  if (!key) return null; // 免費版也必須有金鑰才有 WC 權限
+  const url = 'https://api.football-data.org/v4/' + endpoint;
+  // 1) 直連嘗試
   try {
-    const res = await fetch('https://api.football-data.org/v4/' + endpoint, { headers });
-    if (!res.ok) return null;
-    return await res.json();
-  } catch(e) { return null; }
+    const res = await fetch(url, { headers: { 'X-Auth-Token': key } });
+    if (res.ok) return await res.json();
+  } catch(e) { /* CORS 或網路問題，改走 proxy */ }
+  // 2) CORS proxy 備援
+  try {
+    const proxied = 'https://corsproxy.io/?url=' + encodeURIComponent(url);
+    const res2 = await fetch(proxied, { headers: { 'X-Auth-Token': key } });
+    if (res2.ok) return await res2.json();
+  } catch(e) { /* proxy 也失敗 */ }
+  return null;
 }
 
 // ===== MATCHES =====
@@ -881,44 +1168,154 @@ async function loadMatches() {
 }
 
 function getDemoMatches() {
-  return [
-    { id:1, status:'IN_PLAY', minute:67, utcDate:'2026-06-11T14:00:00Z', stage:'GROUP_STAGE', group:'GROUP_A',
-      homeTeam:{name:'美國', shortName:'USA', crest:'🇺🇸'}, awayTeam:{name:'塞爾維亞', shortName:'SRB', crest:'🇷🇸'},
-      score:{fullTime:{home:2,away:1}}, odds:{home:1.85, draw:3.60, away:4.20, prev:{home:1.80,draw:3.70,away:4.50}} },
-    { id:2, status:'IN_PLAY', minute:34, utcDate:'2026-06-11T14:00:00Z', stage:'GROUP_STAGE', group:'GROUP_B',
-      homeTeam:{name:'墨西哥', shortName:'MEX', crest:'🇲🇽'}, awayTeam:{name:'波蘭', shortName:'POL', crest:'🇵🇱'},
-      score:{fullTime:{home:0,away:0}}, odds:{home:2.10, draw:3.20, away:3.40, prev:{home:2.00,draw:3.20,away:3.60}} },
-    { id:3, status:'SCHEDULED', utcDate:'2026-06-11T18:00:00Z', stage:'GROUP_STAGE', group:'GROUP_C',
-      homeTeam:{name:'阿根廷', shortName:'ARG', crest:'🇦🇷'}, awayTeam:{name:'摩洛哥', shortName:'MAR', crest:'🇲🇦'},
-      score:{fullTime:{home:null,away:null}}, odds:{home:1.55, draw:4.00, away:6.50, prev:{home:1.55,draw:4.00,away:6.50}} },
-    { id:4, status:'SCHEDULED', utcDate:'2026-06-11T21:00:00Z', stage:'GROUP_STAGE', group:'GROUP_D',
-      homeTeam:{name:'法國', shortName:'FRA', crest:'🇫🇷'}, awayTeam:{name:'澳洲', shortName:'AUS', crest:'🇦🇺'},
-      score:{fullTime:{home:null,away:null}}, odds:{home:1.28, draw:5.50, away:11.0, prev:{home:1.30,draw:5.50,away:11.0}} },
-    { id:5, status:'FINISHED', utcDate:'2026-06-11T10:00:00Z', stage:'GROUP_STAGE', group:'GROUP_E',
-      homeTeam:{name:'西班牙', shortName:'ESP', crest:'🇪🇸'}, awayTeam:{name:'哥斯大黎加', shortName:'CRC', crest:'🇨🇷'},
-      score:{fullTime:{home:3,away:0}}, odds:{home:1.22, draw:6.00, away:13.0, prev:{home:1.22,draw:6.00,away:13.0}} },
-    { id:6, status:'FINISHED', utcDate:'2026-06-11T10:00:00Z', stage:'GROUP_STAGE', group:'GROUP_F',
-      homeTeam:{name:'巴西', shortName:'BRA', crest:'🇧🇷'}, awayTeam:{name:'克羅埃西亞', shortName:'CRO', crest:'🇭🇷'},
-      score:{fullTime:{home:1,away:1}}, odds:{home:1.45, draw:4.20, away:7.00, prev:{home:1.45,draw:4.20,away:7.00}} },
-    { id:7, status:'SCHEDULED', utcDate:'2026-06-12T14:00:00Z', stage:'GROUP_STAGE', group:'GROUP_G',
-      homeTeam:{name:'德國', shortName:'GER', crest:'🇩🇪'}, awayTeam:{name:'日本', shortName:'JPN', crest:'🇯🇵'},
-      score:{fullTime:{home:null,away:null}}, odds:{home:1.65, draw:3.80, away:5.50, prev:{home:1.65,draw:3.80,away:5.50}} },
-    { id:8, status:'SCHEDULED', utcDate:'2026-06-12T18:00:00Z', stage:'GROUP_STAGE', group:'GROUP_H',
-      homeTeam:{name:'英格蘭', shortName:'ENG', crest:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}, awayTeam:{name:'伊朗', shortName:'IRN', crest:'🇮🇷'},
-      score:{fullTime:{home:null,away:null}}, odds:{home:1.35, draw:4.80, away:9.00, prev:{home:1.35,draw:4.80,away:9.00}} },
+  // 真實開幕週賽程。狀態(status)不寫死，改由 computeStatus() 依當前時間動態判斷。
+  // utcDate 使用各場館當地時區的開球時間（已含時區位移）。
+  const raw = [
+    { id:1, utcDate:'2026-06-11T19:00:00-06:00', venue:'墨西哥城阿茲特克', group:'GROUP_A',
+      homeTeam:{name:'墨西哥', crest:'🇲🇽'}, awayTeam:{name:'南非', crest:'🇿🇦'}, finalScore:[2,0], realStatus:'FINISHED',
+      odds:{home:1.52, draw:4.1, away:7.0, prev:{home:1.52, draw:4.1, away:7.0}} },
+    { id:2, utcDate:'2026-06-11T20:00:00-06:00', venue:'瓜達拉哈拉 Akron', group:'GROUP_A',
+      homeTeam:{name:'南韓', crest:'🇰🇷'}, awayTeam:{name:'捷克', crest:'🇨🇿'}, finalScore:[2,1], realStatus:'FINISHED',
+      odds:{home:2.05, draw:3.3, away:3.5, prev:{home:2.05, draw:3.3, away:3.5}} },
+    { id:3, utcDate:'2026-06-12T15:00:00-04:00', venue:'多倫多', group:'GROUP_B',
+      homeTeam:{name:'加拿大', crest:'🇨🇦'}, awayTeam:{name:'波士尼亞', crest:'🇧🇦'},
+      odds:{home:1.95, draw:3.4, away:4.0, prev:{home:1.95, draw:3.4, away:4.0}} },
+    { id:4, utcDate:'2026-06-12T18:00:00-07:00', venue:'洛杉磯 SoFi', group:'GROUP_D',
+      homeTeam:{name:'美國', crest:'🇺🇸'}, awayTeam:{name:'巴拉圭', crest:'🇵🇾'},
+      odds:{home:1.65, draw:3.7, away:5.8, prev:{home:1.65, draw:3.7, away:5.8}} },
+    { id:5, utcDate:'2026-06-13T12:00:00-07:00', venue:'聖塔克拉拉', group:'GROUP_B',
+      homeTeam:{name:'卡達', crest:'🇶🇦'}, awayTeam:{name:'瑞士', crest:'🇨🇭'},
+      odds:{home:4.5, draw:3.6, away:1.75, prev:{home:4.5, draw:3.6, away:1.75}} },
+    { id:6, utcDate:'2026-06-13T18:00:00-04:00', venue:'紐澤西 MetLife', group:'GROUP_C',
+      homeTeam:{name:'巴西', crest:'🇧🇷'}, awayTeam:{name:'摩洛哥', crest:'🇲🇦'},
+      odds:{home:1.8, draw:3.5, away:4.6, prev:{home:1.8, draw:3.5, away:4.6}} },
+    { id:7, utcDate:'2026-06-13T21:00:00-04:00', venue:'波士頓', group:'GROUP_C',
+      homeTeam:{name:'海地', crest:'🇭🇹'}, awayTeam:{name:'蘇格蘭', crest:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'},
+      odds:{home:6.0, draw:3.8, away:1.6, prev:{home:6.0, draw:3.8, away:1.6}} },
+    { id:8, utcDate:'2026-06-13T21:00:00-07:00', venue:'溫哥華 BC Place', group:'GROUP_D',
+      homeTeam:{name:'澳洲', crest:'🇦🇺'}, awayTeam:{name:'土耳其', crest:'🇹🇷'},
+      odds:{home:3.4, draw:3.3, away:2.1, prev:{home:3.4, draw:3.3, away:2.1}} },
+    { id:9, utcDate:'2026-06-14T12:00:00-05:00', venue:'休士頓', group:'GROUP_E',
+      homeTeam:{name:'德國', crest:'🇩🇪'}, awayTeam:{name:'古拉索', crest:'🇨🇼'},
+      odds:{home:1.12, draw:8.5, away:21.0, prev:{home:1.12, draw:8.5, away:21.0}} },
+    { id:10, utcDate:'2026-06-14T15:00:00-05:00', venue:'阿靈頓（達拉斯）', group:'GROUP_F',
+      homeTeam:{name:'荷蘭', crest:'🇳🇱'}, awayTeam:{name:'日本', crest:'🇯🇵'},
+      odds:{home:1.95, draw:3.4, away:3.9, prev:{home:1.95, draw:3.4, away:3.9}} },
+    { id:11, utcDate:'2026-06-14T19:00:00-04:00', venue:'費城', group:'GROUP_E',
+      homeTeam:{name:'象牙海岸', crest:'🇨🇮'}, awayTeam:{name:'厄瓜多', crest:'🇪🇨'},
+      odds:{home:2.7, draw:3.1, away:2.6, prev:{home:2.7, draw:3.1, away:2.6}} },
+    { id:12, utcDate:'2026-06-14T20:00:00-06:00', venue:'蒙特雷', group:'GROUP_F',
+      homeTeam:{name:'瑞典', crest:'🇸🇪'}, awayTeam:{name:'突尼西亞', crest:'🇹🇳'},
+      odds:{home:2.0, draw:3.2, away:3.8, prev:{home:2.0, draw:3.2, away:3.8}} },
+    { id:13, utcDate:'2026-06-15T12:00:00-04:00', venue:'亞特蘭大', group:'GROUP_H',
+      homeTeam:{name:'西班牙', crest:'🇪🇸'}, awayTeam:{name:'維德角', crest:'🇨🇻'},
+      odds:{home:1.18, draw:7.5, away:15.0, prev:{home:1.18, draw:7.5, away:15.0}} },
+    { id:14, utcDate:'2026-06-15T15:00:00-07:00', venue:'西雅圖', group:'GROUP_G',
+      homeTeam:{name:'比利時', crest:'🇧🇪'}, awayTeam:{name:'埃及', crest:'🇪🇬'},
+      odds:{home:1.6, draw:3.8, away:5.5, prev:{home:1.6, draw:3.8, away:5.5}} },
+    { id:15, utcDate:'2026-06-15T18:00:00-04:00', venue:'邁阿密', group:'GROUP_H',
+      homeTeam:{name:'沙烏地阿拉伯', crest:'🇸🇦'}, awayTeam:{name:'烏拉圭', crest:'🇺🇾'},
+      odds:{home:5.5, draw:3.6, away:1.65, prev:{home:5.5, draw:3.6, away:1.65}} },
+    { id:16, utcDate:'2026-06-15T21:00:00-07:00', venue:'洛杉磯 SoFi', group:'GROUP_G',
+      homeTeam:{name:'伊朗', crest:'🇮🇷'}, awayTeam:{name:'紐西蘭', crest:'🇳🇿'},
+      odds:{home:2.4, draw:3.1, away:3.1, prev:{home:2.4, draw:3.1, away:3.1}} },
+    { id:17, utcDate:'2026-06-16T15:00:00-04:00', venue:'紐澤西 MetLife', group:'GROUP_I',
+      homeTeam:{name:'法國', crest:'🇫🇷'}, awayTeam:{name:'塞內加爾', crest:'🇸🇳'},
+      odds:{home:1.55, draw:3.9, away:6.2, prev:{home:1.55, draw:3.9, away:6.2}} },
+    { id:18, utcDate:'2026-06-16T18:00:00-04:00', venue:'波士頓', group:'GROUP_I',
+      homeTeam:{name:'伊拉克', crest:'🇮🇶'}, awayTeam:{name:'挪威', crest:'🇳🇴'},
+      odds:{home:6.5, draw:4.0, away:1.5, prev:{home:6.5, draw:4.0, away:1.5}} },
+    { id:19, utcDate:'2026-06-16T20:00:00-05:00', venue:'堪薩斯城', group:'GROUP_J',
+      homeTeam:{name:'阿根廷', crest:'🇦🇷'}, awayTeam:{name:'阿爾及利亞', crest:'🇩🇿'},
+      odds:{home:1.4, draw:4.5, away:8.5, prev:{home:1.4, draw:4.5, away:8.5}} },
+    { id:20, utcDate:'2026-06-17T00:00:00-05:00', venue:'阿靈頓（達拉斯）', group:'GROUP_J',
+      homeTeam:{name:'奧地利', crest:'🇦🇹'}, awayTeam:{name:'約旦', crest:'🇯🇴'},
+      odds:{home:1.7, draw:3.5, away:5.0, prev:{home:1.7, draw:3.5, away:5.0}} },
+    { id:21, utcDate:'2026-06-17T13:00:00-05:00', venue:'休士頓', group:'GROUP_K',
+      homeTeam:{name:'葡萄牙', crest:'🇵🇹'}, awayTeam:{name:'剛果民主共和國', crest:'🇨🇩'},
+      odds:{home:1.3, draw:5.2, away:10.5, prev:{home:1.3, draw:5.2, away:10.5}} },
+    { id:22, utcDate:'2026-06-17T16:00:00-05:00', venue:'阿靈頓（達拉斯）', group:'GROUP_L',
+      homeTeam:{name:'英格蘭', crest:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}, awayTeam:{name:'克羅埃西亞', crest:'🇭🇷'},
+      odds:{home:1.85, draw:3.4, away:4.4, prev:{home:1.85, draw:3.4, away:4.4}} },
+    { id:23, utcDate:'2026-06-17T19:00:00-04:00', venue:'多倫多', group:'GROUP_L',
+      homeTeam:{name:'迦納', crest:'🇬🇭'}, awayTeam:{name:'巴拿馬', crest:'🇵🇦'},
+      odds:{home:2.5, draw:3.1, away:3.0, prev:{home:2.5, draw:3.1, away:3.0}} },
+    { id:24, utcDate:'2026-06-17T21:00:00-05:00', venue:'墨西哥城', group:'GROUP_K',
+      homeTeam:{name:'烏茲別克', crest:'🇺🇿'}, awayTeam:{name:'哥倫比亞', crest:'🇨🇴'},
+      odds:{home:4.2, draw:3.4, away:1.85, prev:{home:4.2, draw:3.4, away:1.85}} },
   ];
+  return raw.map(m => {
+    let s = computeStatus(m.utcDate);
+    // 已知真實狀態覆蓋（手動更新的即時比賽），避免時間模型誤判半場
+    if (m.realStatus) {
+      // 但若時間模型已判定比賽早該結束（例如標記為進行中後又過了好幾小時），
+      // 自動轉為已結束，避免「比賽結束了卻一直顯示進行中」
+      if (m.realStatus !== 'FINISHED' && s.status === 'FINISHED') {
+        s = { status:'FINISHED', minute:null };
+      } else {
+        s = { status: m.realStatus, minute: m.realMinute ?? s.minute };
+      }
+    }
+    let home = null, away = null;
+    if (s.status === 'FINISHED' && (m.finalScore || m.liveScore)) {
+      const sc = m.finalScore || m.liveScore;
+      home = sc[0]; away = sc[1];
+    }
+    else if ((s.status === 'IN_PLAY' || s.status === 'PAUSED')) {
+      // 進行中：若有實際即時比分用之，否則 0-0 起跳
+      if (m.liveScore) { home = m.liveScore[0]; away = m.liveScore[1]; }
+      else if (m.finalScore) { home = m.finalScore[0]; away = m.finalScore[1]; }
+      else { home = 0; away = 0; }
+    }
+    return { ...m, stage:'GROUP_STAGE', status:s.status, minute:s.minute,
+      score:{fullTime:{home, away}} };
+  });
+}
+
+// 依當前真實時間判斷比賽狀態：未開賽 / 進行中(含分鐘) / 已結束
+function computeStatus(utcDate) {
+  const now = Date.now();
+  const start = new Date(utcDate).getTime();
+  const diffMin = (now - start) / 60000;
+  if (diffMin < 0) return { status:'SCHEDULED', minute:null };
+  if (diffMin <= 50) return { status:'IN_PLAY', minute: Math.max(1, Math.floor(diffMin)) };
+  if (diffMin <= 65) return { status:'PAUSED', minute: 45 };       // 中場休息
+  if (diffMin <= 115) return { status:'IN_PLAY', minute: Math.floor(diffMin) - 15 };
+  return { status:'FINISHED', minute:null };
+}
+
+// 取得某時間在台灣時區的日期字串 (YYYY-MM-DD)，作為「今日/明日」判斷依據
+function twDateKey(dateLike) {
+  const d = new Date(dateLike);
+  return d.toLocaleDateString('en-CA', { timeZone:'Asia/Taipei' }); // en-CA 給出 YYYY-MM-DD
 }
 
 function renderMatches() {
   const filter = state.matchFilter;
   let matches = state.matches;
+
+  const todayKey = twDateKey(Date.now());
+  const tomorrowKey = twDateKey(Date.now() + 86400000);
+
   if (filter === 'live') matches = matches.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
-  else if (filter === 'today') matches = matches.filter(m => {
-    const d = new Date(m.utcDate);
-    const now = new Date();
-    return d.toDateString() === now.toDateString();
-  });
+  else if (filter === 'today') matches = matches.filter(m => twDateKey(m.utcDate) === todayKey);
+  else if (filter === 'tomorrow') matches = matches.filter(m => twDateKey(m.utcDate) === tomorrowKey);
   else if (filter === 'upcoming') matches = matches.filter(m => m.status === 'SCHEDULED' || m.status === 'TIMED');
+
+  // 「明日」單獨呈現：依台灣時間排序，標題顯示日期
+  if (filter === 'tomorrow') {
+    const sorted = [...matches].sort((a,b) => new Date(a.utcDate) - new Date(b.utcDate));
+    let html = '';
+    if (sorted.length) {
+      const dateLabel = new Date(Date.now() + 86400000).toLocaleDateString('zh-TW', { timeZone:'Asia/Taipei', month:'long', day:'numeric', weekday:'short' });
+      html += `<div class="section-label">🌅 明日賽事 · ${dateLabel}（台灣時間 ${sorted.length} 場）</div>`;
+      html += sorted.map(renderMatchCard).join('');
+    } else {
+      html = '<div class="loading-card">明日（台灣時間）暫無排定賽事，可切換「即將開賽」查看後續場次</div>';
+    }
+    document.getElementById('matchesList').innerHTML = html;
+    return;
+  }
 
   const liveMatches = matches.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
   const upcoming = matches.filter(m => m.status === 'SCHEDULED' || m.status === 'TIMED');
@@ -951,13 +1348,19 @@ function renderMatchCard(m) {
     : '<span style="font-size:13px;color:var(--text-muted)">VS</span>';
 
   const timeStr = isLive
-    ? `<span class="match-time live-time">🔴 ${m.minute || '?'}′</span>`
+    ? `<span class="match-time live-time">🔴 ${m.status==='PAUSED' ? '中場' : (m.minute || '?')+'′'}</span>`
     : isFinished
-    ? `<span class="match-time">FT</span>`
-    : `<span class="match-time">${new Date(m.utcDate).toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'})}</span>`;
+    ? `<span class="match-time">完場 FT</span>`
+    : `<span class="match-time">${fmtTW(m.utcDate)} 台灣</span>`;
 
   const homeFlag = m.homeTeam.crest || '🏳';
   const awayFlag = m.awayTeam.crest || '🏳';
+
+  // 雙時區：場館當地時間 + 台灣時間
+  const tzLine = `<div style="font-size:11px;color:var(--text-muted);margin-top:4px;display:flex;gap:10px;flex-wrap:wrap;">
+    <span>🇹🇼 台灣：${fmtTW(m.utcDate)}</span>
+    <span>📍 當地：${fmtLocal(m.utcDate)}${m.venue?' · '+m.venue:''}</span>
+  </div>`;
 
   let oddsHtml = '';
   if (m.odds) {
@@ -976,7 +1379,13 @@ function renderMatchCard(m) {
     </div>`;
   }
 
-  const stage = m.group ? `${m.stage?.replace('_',' ')} · ${m.group?.replace('GROUP_','G')}` : (m.stage || '');
+  const stage = `${roundLabel(m.stage, m.round)}${m.group ? ' · ' + groupLabel(m.group) : ''}`;
+
+  // 球隊是否有名單可查（SQUADS 內存在）
+  const homeHasSquad = !!SQUADS[m.homeTeam.name];
+  const awayHasSquad = !!SQUADS[m.awayTeam.name];
+  const homeClick = homeHasSquad ? `onclick="event.stopPropagation();goToSquad('${m.homeTeam.name}')" style="cursor:pointer" title="查看 ${m.homeTeam.name} 球員名單"` : '';
+  const awayClick = awayHasSquad ? `onclick="event.stopPropagation();goToSquad('${m.awayTeam.name}')" style="cursor:pointer" title="查看 ${m.awayTeam.name} 球員名單"` : '';
 
   return `<div class="match-card ${isLive ? 'live' : ''}" onclick="analyzeMatch(${m.id})">
     <div class="match-meta">
@@ -984,33 +1393,245 @@ function renderMatchCard(m) {
       ${timeStr}
     </div>
     <div class="match-teams">
-      <div class="team-info">
+      <div class="team-info team-clickable" ${homeClick}>
         <span class="team-flag">${homeFlag}</span>
-        <div><div class="team-name">${m.homeTeam.name}</div></div>
+        <div><div class="team-name">${teamFull(m.homeTeam.name)}${homeHasSquad?' <span class="squad-hint">›</span>':''}</div></div>
       </div>
       <div class="score-box">${scoreStr}</div>
-      <div class="team-info right">
-        <div><div class="team-name">${m.awayTeam.name}</div></div>
+      <div class="team-info right team-clickable" ${awayClick}>
+        <div><div class="team-name">${awayHasSquad?'<span class="squad-hint">‹</span> ':''}${teamFull(m.awayTeam.name)}</div></div>
         <span class="team-flag">${awayFlag}</span>
       </div>
     </div>
+    ${tzLine}
     ${oddsHtml}
   </div>`;
 }
 
+// 從即時賽事跳轉到指定球隊名單
+function goToSquad(teamName) {
+  if (!SQUADS[teamName]) return;
+  if (!document.querySelector('.team-select-btn')) initSquads();
+  currentTeam = teamName;
+  showTab('squads');
+  // 更新選取按鈕高亮並渲染
+  let activeBtn = null;
+  document.querySelectorAll('.team-select-btn').forEach(b => {
+    const on = b.dataset.team === teamName;
+    b.classList.toggle('active', on);
+    if (on) activeBtn = b;
+  });
+  renderSquad(teamName);
+  // 將選取的球隊按鈕捲動到可見範圍
+  activeBtn?.scrollIntoView({behavior:'smooth', inline:'center', block:'nearest'});
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+// ===== 賽程總表 =====
+let scheduleFilter = 'all';
+function renderSchedule() {
+  // 篩選列（依輪次/組別）
+  const filterRow = document.getElementById('scheduleFilters');
+  if (filterRow && !filterRow.dataset.built) {
+    const groups = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+    filterRow.innerHTML =
+      `<button class="filter-btn active" onclick="setScheduleFilter('all',this)">全部</button>` +
+      groups.map(g => `<button class="filter-btn" onclick="setScheduleFilter('${g}',this)">${g} 組</button>`).join('');
+    filterRow.dataset.built = '1';
+  }
+
+  let matches = [...state.matches];
+  if (scheduleFilter !== 'all') matches = matches.filter(m => m.group === 'GROUP_' + scheduleFilter);
+  matches.sort((a,b) => new Date(a.utcDate) - new Date(b.utcDate));
+
+  // 依台灣日期分組
+  const byDay = {};
+  matches.forEach(m => {
+    const key = twDateKey(m.utcDate);
+    (byDay[key] = byDay[key] || []).push(m);
+  });
+
+  let html = '';
+  Object.keys(byDay).sort().forEach(day => {
+    const dLabel = new Date(day + 'T00:00:00+08:00').toLocaleDateString('zh-TW', { timeZone:'Asia/Taipei', month:'long', day:'numeric', weekday:'long' });
+    html += `<div class="sched-day"><div class="sched-day-head">📅 ${dLabel}（台灣時間）</div>`;
+    byDay[day].forEach(m => {
+      const isFin = m.status === 'FINISHED';
+      const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED';
+      const h = m.score?.fullTime?.home, a = m.score?.fullTime?.away;
+      const mid = (h !== null && h !== undefined)
+        ? `<span class="sched-score">${h} - ${a}</span>`
+        : `<span class="sched-vs">${fmtTW(m.utcDate).split(' ')[1] || ''}</span>`;
+      const badge = isLive ? `🔴 ${m.minute||''}′` : isFin ? '完場' : roundLabel(m.stage,m.round);
+      html += `<div class="sched-row" onclick="analyzeMatch(${m.id})">
+        <span class="sched-badge">${groupLabel(m.group)}</span>
+        <div class="sched-teams">
+          <span class="sched-side home">${m.homeTeam.crest} ${teamFull(m.homeTeam.name)}</span>
+          <span style="text-align:center">${mid}</span>
+          <span class="sched-side">${teamFull(m.awayTeam.name)} ${m.awayTeam.crest}</span>
+        </div>
+        <span class="sched-badge">${badge}</span>
+      </div>`;
+    });
+    html += '</div>';
+  });
+  if (!html) html = '<div class="loading-card">暫無賽程資料</div>';
+  document.getElementById('scheduleList').innerHTML = html;
+}
+function setScheduleFilter(f, btn) {
+  scheduleFilter = f;
+  document.querySelectorAll('#scheduleFilters .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSchedule();
+}
+
+// ===== 淘汰賽對戰圖 =====
+function renderBracket() {
+  // 對戰圖需要積分榜資料；若尚未載入則先載入
+  if (!state.standings || state.standings.length === 0) {
+    loadStandings().then(() => renderBracket());
+    return;
+  }
+  // 各組排名查詢表
+  const groupMap = {};
+  state.standings.forEach(g => {
+    const key = (g.group||'').replace('GROUP_','');
+    if (key) groupMap[key] = g.table || [];
+  });
+  // 取得某組第 n 名球隊（1=冠軍,2=亞軍）
+  // 只有當該組「全部 4 隊都踢滿 3 場」時，名次才算確定，才填入對戰框；否則回傳 null 顯示「待定」
+  const seed = (letter, pos) => {
+    const rows = groupMap[letter] || [];
+    if (rows.length < 4) return null;
+    const groupComplete = rows.every(x => (x.playedGames || 0) >= 3);
+    if (!groupComplete) return null; // 小組賽未踢完，不預先填入
+    const r = rows.find(x => x.position === pos);
+    if (r) return { name:r.team.name, crest:r.team.crest, locked:true };
+    return null;
+  };
+  const W = (l) => seed(l,1);  // 組首
+  const R = (l) => seed(l,2);  // 組次
+  const T3 = (label) => ({ name:'第三名', sub:label, crest:'🏳️', third:true }); // 最佳第三名待定
+
+  // 官方 32 強對戰結構（Match 73–88）。aLabel/bLabel 為位置來源，未確定前顯示
+  const R32 = [
+    // 左半
+    { m:74, venue:'波士頓', a:W('E'),  b:T3('A/B/C/D/F'), aLabel:'E 組冠軍' },
+    { m:77, venue:'紐約',   a:W('I'),  b:T3('C/D/F/G/H'), aLabel:'I 組冠軍' },
+    { m:73, venue:'洛杉磯', a:R('A'),  b:R('B'), aLabel:'A 組亞軍', bLabel:'B 組亞軍' },
+    { m:79, venue:'墨西哥城', a:W('A'), b:T3('C/E/F/H/I'), aLabel:'A 組冠軍' },
+    { m:75, venue:'瓜達盧佩', a:W('F'), b:R('C'), aLabel:'F 組冠軍', bLabel:'C 組亞軍' },
+    { m:76, venue:'休士頓', a:W('C'),  b:R('F'), aLabel:'C 組冠軍', bLabel:'F 組亞軍' },
+    { m:78, venue:'達拉斯', a:R('E'),  b:R('I'), aLabel:'E 組亞軍', bLabel:'I 組亞軍' },
+    { m:80, venue:'亞特蘭大', a:W('L'), b:T3('E/H/I/J/K'), aLabel:'L 組冠軍' },
+    // 右半
+    { m:82, venue:'西雅圖', a:W('G'),  b:T3('A/E/H/I/J'), aLabel:'G 組冠軍' },
+    { m:85, venue:'溫哥華', a:W('B'),  b:T3('E/F/G/I/J'), aLabel:'B 組冠軍' },
+    { m:83, venue:'多倫多', a:R('K'),  b:R('L'), aLabel:'K 組亞軍', bLabel:'L 組亞軍' },
+    { m:87, venue:'堪薩斯城', a:W('K'), b:T3('D/E/I/J/L'), aLabel:'K 組冠軍' },
+    { m:81, venue:'舊金山', a:W('D'),  b:T3('B/E/F/I/J'), aLabel:'D 組冠軍' },
+    { m:84, venue:'洛杉磯', a:W('H'),  b:R('J'), aLabel:'H 組冠軍', bLabel:'J 組亞軍' },
+    { m:86, venue:'邁阿密', a:W('J'),  b:R('H'), aLabel:'J 組冠軍', bLabel:'H 組亞軍' },
+    { m:88, venue:'達拉斯', a:R('D'),  b:R('G'), aLabel:'D 組亞軍', bLabel:'G 組亞軍' },
+  ];
+
+  // 一個對戰框（可帶比分）
+  const matchBox = (mt, side) => {
+    if (!mt) return `<div class="bx empty"><div class="bx-slot tbd">待定</div><div class="bx-slot tbd">待定</div></div>`;
+    const slot = (team, sc, win, seedLabel) => {
+      // 尚未確定的位置：顯示來源（如「A 組冠軍」），而非空白「待定」
+      if (!team) return `<div class="bx-slot tbd">${seedLabel || '待定'}</div>`;
+      const nm = team.third ? `第三名 <span class="bx-sub">${team.sub}</span>`
+                : `${team.crest||''} ${team.name}`;
+      return `<div class="bx-slot ${win?'win':''}">
+        <span class="bx-team">${nm}</span>
+        <span class="bx-score">${sc??''}</span>
+      </div>`;
+    };
+    const hasScore = mt.score && mt.score.length === 2;
+    const aWin = hasScore && mt.score[0] > mt.score[1];
+    const bWin = hasScore && mt.score[1] > mt.score[0];
+    return `<div class="bx">
+      ${slot(mt.a, hasScore?mt.score[0]:null, aWin, mt.aLabel)}
+      ${slot(mt.b, hasScore?mt.score[1]:null, bWin, mt.bLabel)}
+      <div class="bx-meta">M${mt.m} · ${mt.venue}</div>
+    </div>`;
+  };
+
+  const half = (arr) => `<div class="tree-col r32">${arr.map(m=>matchBox(m)).join('')}</div>`;
+  const emptyCol = (n, cls) => `<div class="tree-col ${cls}">${Array.from({length:n}).map(()=>matchBox(null)).join('')}</div>`;
+
+  const leftR32 = R32.slice(0,8);
+  const rightR32 = R32.slice(8,16);
+
+  const html = `<div class="tree-scroll">
+    <div class="tree-legend">📋 各框顯示晉級來源（如「A 組冠軍」）· 該組 3 場全部踢完後才填入確定隊伍 · 淘汰賽完賽顯示比分</div>
+    <div class="tree-grid">
+      <!-- 左半 -->
+      <div class="tree-colwrap"><div class="tree-h">32 強</div>${half(leftR32)}</div>
+      <div class="tree-colwrap"><div class="tree-h">16 強</div>${emptyCol(4,'r16')}</div>
+      <div class="tree-colwrap"><div class="tree-h">8 強</div>${emptyCol(2,'qf')}</div>
+      <div class="tree-colwrap"><div class="tree-h">4 強</div>${emptyCol(1,'sf')}</div>
+      <!-- 中央冠軍 -->
+      <div class="tree-colwrap tree-champ">
+        <div class="trophy-icon">🏆</div>
+        <div class="trophy-label">FIFA WORLD CUP</div>
+        <div class="tree-h" style="margin-top:8px">冠軍戰</div>
+        ${matchBox(null)}
+        <div class="champion-box"><div style="font-size:1.6rem">👑</div><div class="champion-tbd">冠軍待定</div></div>
+      </div>
+      <!-- 右半 -->
+      <div class="tree-colwrap"><div class="tree-h">4 強</div>${emptyCol(1,'sf')}</div>
+      <div class="tree-colwrap"><div class="tree-h">8 強</div>${emptyCol(2,'qf')}</div>
+      <div class="tree-colwrap"><div class="tree-h">16 強</div>${emptyCol(4,'r16')}</div>
+      <div class="tree-colwrap"><div class="tree-h">32 強</div>${half(rightR32)}</div>
+    </div>
+    <div class="bracket-note">
+      🏟️ 32 強對戰組合依 FIFA 官方賽程（M73–M88）排定<br>
+      各框先顯示晉級來源（如「A 組冠軍」），<strong>等該組 3 場小組賽全部踢完、名次確定後才會填入隊伍</strong><br>
+      淘汰賽 6/28 開打：32強 → 16強 → 8強 → 4強 → 冠軍戰（7/19 紐澤西 MetLife 球場）
+    </div>
+  </div>`;
+  document.getElementById('bracketView').innerHTML = html;
+}
+
+// 時間格式化：台灣時間（UTC+8）
+function fmtTW(utcDate) {
+  const d = new Date(utcDate);
+  const s = d.toLocaleString('zh-TW', { timeZone:'Asia/Taipei', month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false });
+  return s;
+}
+// 場館當地時間（依 utcDate 內含的時區位移直接顯示）
+function fmtLocal(utcDate) {
+  // utcDate 形如 2026-06-11T19:00:00-06:00，取其當地時鐘時間
+  const mt = utcDate.match(/T(\d{2}):(\d{2})/);
+  const dm = utcDate.match(/(\d{4})-(\d{2})-(\d{2})/);
+  if (!mt || !dm) return '';
+  return `${parseInt(dm[2])}/${parseInt(dm[3])} ${mt[1]}:${mt[2]}`;
+}
+
 function updateSummaryStats() {
+  const todayKey = twDateKey(Date.now());
+  const tomorrowKey = twDateKey(Date.now() + 86400000);
   const live = state.matches.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED').length;
-  const today = state.matches.filter(m => {
-    const d = new Date(m.utcDate); const now = new Date();
-    return d.toDateString() === now.toDateString();
-  }).length;
-  const finished = state.matches.filter(m => m.status === 'FINISHED').length;
+  const today = state.matches.filter(m => twDateKey(m.utcDate) === todayKey).length;
+  const tomorrow = state.matches.filter(m => twDateKey(m.utcDate) === tomorrowKey).length;
   document.getElementById('summaryStats').innerHTML = `
-    <div class="stat-cell"><div class="stat-num" style="color:var(--red-bright)">${live}</div><div class="stat-label">進行中</div></div>
-    <div class="stat-cell"><div class="stat-num">${today}</div><div class="stat-label">今日賽事</div></div>
-    <div class="stat-cell"><div class="stat-num">${finished}</div><div class="stat-label">已完賽</div></div>
+    <div class="stat-cell" style="cursor:pointer" onclick="quickFilter('live')"><div class="stat-num" style="color:var(--red-bright)">${live}</div><div class="stat-label">進行中</div></div>
+    <div class="stat-cell" style="cursor:pointer" onclick="quickFilter('today')"><div class="stat-num">${today}</div><div class="stat-label">今日賽事</div></div>
+    <div class="stat-cell" style="cursor:pointer" onclick="quickFilter('tomorrow')"><div class="stat-num" style="color:var(--gold)">${tomorrow}</div><div class="stat-label">🌅 明日賽事</div></div>
     <div class="stat-cell"><div class="stat-num" style="color:var(--gold)">104</div><div class="stat-label">總場次</div></div>
   `;
+}
+
+// 點摘要卡片直接套用對應篩選並高亮按鈕
+function quickFilter(f) {
+  state.matchFilter = f;
+  document.querySelectorAll('#matchFilters .filter-btn').forEach(b => {
+    const labelMap = { live:'進行中', today:'今日', tomorrow:'明日', upcoming:'即將開賽', all:'全部' };
+    b.classList.toggle('active', b.textContent.includes(labelMap[f] || ''));
+  });
+  renderMatches();
 }
 
 function filterMatches(f, btn) {
@@ -1047,28 +1668,76 @@ async function loadStandings() {
 function getDemoStandings() {
   return [
     { stage: 'GROUP_STAGE', group: 'GROUP_A', table: [
-      { position:1, team:{name:'美國',crest:'🇺🇸'}, playedGames:2, won:1, draw:1, lost:0, goalsFor:3, goalsAgainst:1, goalDifference:2, points:4, form:'WD' },
-      { position:2, team:{name:'英格蘭',crest:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}, playedGames:2, won:1, draw:0, lost:1, goalsFor:2, goalsAgainst:2, goalDifference:0, points:3, form:'WL' },
-      { position:3, team:{name:'伊朗',crest:'🇮🇷'}, playedGames:2, won:0, draw:2, lost:0, goalsFor:1, goalsAgainst:1, goalDifference:0, points:2, form:'DD' },
-      { position:4, team:{name:'威爾斯',crest:'🏴󠁧󠁢󠁷󠁬󠁳󠁿'}, playedGames:2, won:0, draw:1, lost:1, goalsFor:1, goalsAgainst:3, goalDifference:-2, points:1, form:'DL' },
+      { position:1, team:{name:'墨西哥',crest:'🇲🇽'}, playedGames:1, won:1, draw:0, lost:0, goalsFor:2, goalsAgainst:0, goalDifference:2, points:3, form:'W' },
+      { position:2, team:{name:'南韓',crest:'🇰🇷'}, playedGames:1, won:1, draw:0, lost:0, goalsFor:2, goalsAgainst:1, goalDifference:1, points:3, form:'W' },
+      { position:3, team:{name:'捷克',crest:'🇨🇿'}, playedGames:1, won:0, draw:0, lost:1, goalsFor:1, goalsAgainst:2, goalDifference:-1, points:0, form:'L' },
+      { position:4, team:{name:'南非',crest:'🇿🇦'}, playedGames:1, won:0, draw:0, lost:1, goalsFor:0, goalsAgainst:2, goalDifference:-2, points:0, form:'L' },
     ]},
     { stage: 'GROUP_STAGE', group: 'GROUP_B', table: [
-      { position:1, team:{name:'法國',crest:'🇫🇷'}, playedGames:2, won:2, draw:0, lost:0, goalsFor:5, goalsAgainst:1, goalDifference:4, points:6, form:'WW' },
-      { position:2, team:{name:'阿根廷',crest:'🇦🇷'}, playedGames:2, won:1, draw:1, lost:0, goalsFor:3, goalsAgainst:2, goalDifference:1, points:4, form:'WD' },
-      { position:3, team:{name:'丹麥',crest:'🇩🇰'}, playedGames:2, won:0, draw:1, lost:1, goalsFor:2, goalsAgainst:3, goalDifference:-1, points:1, form:'DL' },
-      { position:4, team:{name:'突尼西亞',crest:'🇹🇳'}, playedGames:2, won:0, draw:0, lost:2, goalsFor:0, goalsAgainst:4, goalDifference:-4, points:0, form:'LL' },
+      { position:1, team:{name:'加拿大',crest:'🇨🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'瑞士',crest:'🇨🇭'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'卡達',crest:'🇶🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'波士尼亞',crest:'🇧🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
     ]},
     { stage: 'GROUP_STAGE', group: 'GROUP_C', table: [
-      { position:1, team:{name:'西班牙',crest:'🇪🇸'}, playedGames:2, won:2, draw:0, lost:0, goalsFor:6, goalsAgainst:0, goalDifference:6, points:6, form:'WW' },
-      { position:2, team:{name:'日本',crest:'🇯🇵'}, playedGames:2, won:1, draw:0, lost:1, goalsFor:2, goalsAgainst:2, goalDifference:0, points:3, form:'WL' },
-      { position:3, team:{name:'哥斯大黎加',crest:'🇨🇷'}, playedGames:2, won:1, draw:0, lost:1, goalsFor:1, goalsAgainst:2, goalDifference:-1, points:3, form:'WL' },
-      { position:4, team:{name:'德國',crest:'🇩🇪'}, playedGames:2, won:0, draw:0, lost:2, goalsFor:1, goalsAgainst:6, goalDifference:-5, points:0, form:'LL' },
+      { position:1, team:{name:'巴西',crest:'🇧🇷'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'摩洛哥',crest:'🇲🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'蘇格蘭',crest:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'海地',crest:'🇭🇹'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
     ]},
     { stage: 'GROUP_STAGE', group: 'GROUP_D', table: [
-      { position:1, team:{name:'巴西',crest:'🇧🇷'}, playedGames:2, won:1, draw:1, lost:0, goalsFor:3, goalsAgainst:1, goalDifference:2, points:4, form:'WD' },
-      { position:2, team:{name:'瑞士',crest:'🇨🇭'}, playedGames:2, won:1, draw:1, lost:0, goalsFor:2, goalsAgainst:1, goalDifference:1, points:4, form:'WD' },
-      { position:3, team:{name:'塞爾維亞',crest:'🇷🇸'}, playedGames:2, won:0, draw:1, lost:1, goalsFor:1, goalsAgainst:2, goalDifference:-1, points:1, form:'DL' },
-      { position:4, team:{name:'喀麥隆',crest:'🇨🇲'}, playedGames:2, won:0, draw:1, lost:1, goalsFor:1, goalsAgainst:3, goalDifference:-2, points:1, form:'LD' },
+      { position:1, team:{name:'美國',crest:'🇺🇸'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'巴拉圭',crest:'🇵🇾'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'澳洲',crest:'🇦🇺'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'土耳其',crest:'🇹🇷'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+    ]},
+    { stage: 'GROUP_STAGE', group: 'GROUP_E', table: [
+      { position:1, team:{name:'德國',crest:'🇩🇪'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'厄瓜多',crest:'🇪🇨'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'象牙海岸',crest:'🇨🇮'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'古拉索',crest:'🇨🇼'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+    ]},
+    { stage: 'GROUP_STAGE', group: 'GROUP_F', table: [
+      { position:1, team:{name:'荷蘭',crest:'🇳🇱'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'日本',crest:'🇯🇵'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'突尼西亞',crest:'🇹🇳'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'瑞典',crest:'🇸🇪'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+    ]},
+    { stage: 'GROUP_STAGE', group: 'GROUP_G', table: [
+      { position:1, team:{name:'比利時',crest:'🇧🇪'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'伊朗',crest:'🇮🇷'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'埃及',crest:'🇪🇬'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'紐西蘭',crest:'🇳🇿'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+    ]},
+    { stage: 'GROUP_STAGE', group: 'GROUP_H', table: [
+      { position:1, team:{name:'西班牙',crest:'🇪🇸'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'烏拉圭',crest:'🇺🇾'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'沙烏地阿拉伯',crest:'🇸🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'維德角',crest:'🇨🇻'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+    ]},
+    { stage: 'GROUP_STAGE', group: 'GROUP_I', table: [
+      { position:1, team:{name:'法國',crest:'🇫🇷'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'塞內加爾',crest:'🇸🇳'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'挪威',crest:'🇳🇴'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'伊拉克',crest:'🇮🇶'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+    ]},
+    { stage: 'GROUP_STAGE', group: 'GROUP_J', table: [
+      { position:1, team:{name:'阿根廷',crest:'🇦🇷'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'奧地利',crest:'🇦🇹'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'阿爾及利亞',crest:'🇩🇿'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'約旦',crest:'🇯🇴'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+    ]},
+    { stage: 'GROUP_STAGE', group: 'GROUP_K', table: [
+      { position:1, team:{name:'葡萄牙',crest:'🇵🇹'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'哥倫比亞',crest:'🇨🇴'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'烏茲別克',crest:'🇺🇿'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'剛果民主共和國',crest:'🇨🇩'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+    ]},
+    { stage: 'GROUP_STAGE', group: 'GROUP_L', table: [
+      { position:1, team:{name:'英格蘭',crest:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:2, team:{name:'克羅埃西亞',crest:'🇭🇷'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:3, team:{name:'巴拿馬',crest:'🇵🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'迦納',crest:'🇬🇭'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
     ]},
   ];
 }
@@ -1077,7 +1746,7 @@ function renderStandings() {
   const groups = Array.isArray(state.standings) ? state.standings : [state.standings];
   let html = '';
   groups.forEach(g => {
-    const gName = g.group ? g.group.replace('GROUP_','組別 ') : '小組';
+    const gName = g.group ? groupLabel(g.group) : '小組';
     html += `<div class="group-header">⚽ ${gName}</div>`;
     html += `<table class="standings-table">
       <thead><tr>
@@ -1090,7 +1759,7 @@ function renderStandings() {
       const form = (row.form || '').split('').slice(-5);
       const formHtml = form.map(f => `<span class="form-pill form-${f}">${f}</span>`).join(' ');
       html += `<tr class="${qual}">
-        <td><span class="pos-num">${row.position}</span> ${row.team.crest || ''} ${row.team.name}</td>
+        <td><span class="pos-num">${row.position}</span> ${row.team.crest || ''} ${teamFull(row.team.name)}</td>
         <td>${row.playedGames}</td><td>${row.won}</td><td>${row.draw}</td><td>${row.lost}</td>
         <td>${row.goalsFor}</td><td>${row.goalsAgainst}</td>
         <td style="color:${row.goalDifference>=0?'var(--green-bright)':'var(--red-bright)'}">${row.goalDifference>0?'+':''}${row.goalDifference}</td>
@@ -1111,26 +1780,36 @@ async function loadOdds() {
 
 function getDemoOdds() {
   return [
-    { id:1, home:'阿根廷🇦🇷', away:'法國🇫🇷', stage:'小組賽', time:'06/15 21:00',
-      twsports:{home:1.88, draw:3.45, away:3.90},
-      bet365:{home:1.85, draw:3.50, away:4.00},
-      william:{home:1.90, draw:3.40, away:3.85},
-      asian_handicap:'-0.5', over_under:'2.5', hot: true },
-    { id:2, home:'巴西🇧🇷', away:'德國🇩🇪', stage:'小組賽', time:'06/16 18:00',
-      twsports:{home:1.72, draw:3.80, away:4.50},
-      bet365:{home:1.70, draw:3.85, away:4.60},
-      william:{home:1.75, draw:3.75, away:4.40},
-      asian_handicap:'-0.75', over_under:'2.75', hot: true },
-    { id:3, home:'英格蘭🏴󠁧󠁢󠁥󠁮󠁧󠁿', away:'西班牙🇪🇸', stage:'小組賽', time:'06/17 14:00',
-      twsports:{home:2.35, draw:3.20, away:2.90},
-      bet365:{home:2.40, draw:3.25, away:2.85},
-      william:{home:2.30, draw:3.20, away:2.95},
-      asian_handicap:'0', over_under:'2.5', hot: false },
-    { id:4, home:'美國🇺🇸', away:'墨西哥🇲🇽', stage:'小組賽', time:'06/18 21:00',
-      twsports:{home:2.10, draw:3.30, away:3.20},
-      bet365:{home:2.05, draw:3.35, away:3.30},
-      william:{home:2.15, draw:3.25, away:3.15},
-      asian_handicap:'0', over_under:'2.5', hot: true },
+    { id:1, home:'墨西哥🇲🇽', away:'南非🇿🇦', stage:'A組 · 揭幕戰', time:'06/11 19:00',
+      twsports:{home:1.52, draw:4.05, away:7.20},
+      bet365:{home:1.50, draw:4.10, away:7.00},
+      william:{home:1.53, draw:4.00, away:7.50},
+      asian_handicap:'-1', over_under:'2.25', hot: true },
+    { id:2, home:'美國🇺🇸', away:'巴拉圭🇵🇾', stage:'D組', time:'06/12 15:00',
+      twsports:{home:1.65, draw:3.70, away:5.80},
+      bet365:{home:1.62, draw:3.75, away:6.00},
+      william:{home:1.67, draw:3.65, away:5.70},
+      asian_handicap:'-0.75', over_under:'2.25', hot: true },
+    { id:3, home:'荷蘭🇳🇱', away:'日本🇯🇵', stage:'F組', time:'06/14 15:00',
+      twsports:{home:1.95, draw:3.40, away:3.90},
+      bet365:{home:1.92, draw:3.45, away:4.00},
+      william:{home:1.98, draw:3.35, away:3.85},
+      asian_handicap:'-0.25', over_under:'2.5', hot: true },
+    { id:4, home:'法國🇫🇷', away:'塞內加爾🇸🇳', stage:'I組', time:'06/16 15:00',
+      twsports:{home:1.55, draw:3.90, away:6.20},
+      bet365:{home:1.53, draw:3.95, away:6.40},
+      william:{home:1.57, draw:3.85, away:6.00},
+      asian_handicap:'-0.75', over_under:'2.5', hot: true },
+    { id:5, home:'阿根廷🇦🇷', away:'阿爾及利亞🇩🇿', stage:'J組', time:'06/16 20:00',
+      twsports:{home:1.40, draw:4.50, away:8.50},
+      bet365:{home:1.38, draw:4.60, away:8.80},
+      william:{home:1.42, draw:4.40, away:8.20},
+      asian_handicap:'-1.25', over_under:'2.5', hot: false },
+    { id:6, home:'葡萄牙🇵🇹', away:'剛果民主共和國🇨🇩', stage:'K組', time:'06/17 13:00',
+      twsports:{home:1.30, draw:5.20, away:10.50},
+      bet365:{home:1.28, draw:5.30, away:11.00},
+      william:{home:1.32, draw:5.10, away:10.00},
+      asian_handicap:'-1.5', over_under:'2.75', hot: false },
   ];
 }
 
@@ -1297,10 +1976,10 @@ async function sendAiMessage() {
 - 熟悉台灣運彩與國際賠率盤口解讀
 - 能用繁體中文提供精準、有見解的分析
 
-目前賽事背景：
-- 2026 FIFA 世界盃，美國/加拿大/墨西哥聯合主辦，48支球隊參賽
-- 小組賽階段進行中
-- 已知傷兵：姆巴佩（法國，左腿存疑）、尼馬（巴西，踝關節，確定缺陣部分賽事）、金米希（德國，肋骨骨折，缺陣）
+目前賽事背景（2026年6月）：
+- 2026 FIFA 世界盃，美國/加拿大/墨西哥聯合主辦，48隊12組，6/11揭幕戰墨西哥vs南非
+- 賽制：各組前兩名+8個最佳第三名晉級32強
+- 重要陣容資訊：巴西主帥為安切洛蒂、英格蘭為圖赫爾、西班牙為德拉富恩特；梅西與C羅各自迎來告別戰；英格蘭未徵召佛登、西班牙未徵召莫拉塔、法國前鋒線由姆巴佩/登貝萊/奧利塞/杜埃領銜
 
 回答要精準、有深度，善用數據和戰術分析，繁體中文回答。`;
 
@@ -1346,6 +2025,1623 @@ function updateMsg(id, text) {
 function sendQuickAsk(q) {
   document.getElementById('aiInputField').value = q;
   sendAiMessage();
+}
+
+// ===== SQUADS =====
+const TEAM_EN = {
+  '墨西哥':'Mexico',
+  '南非':'South Africa',
+  '南韓':'South Korea',
+  '捷克':'Czechia',
+  '加拿大':'Canada',
+  '瑞士':'Switzerland',
+  '卡達':'Qatar',
+  '波士尼亞':'Bosnia and Herzegovina',
+  '巴西':'Brazil',
+  '摩洛哥':'Morocco',
+  '蘇格蘭':'Scotland',
+  '海地':'Haiti',
+  '美國':'United States',
+  '巴拉圭':'Paraguay',
+  '澳洲':'Australia',
+  '土耳其':'Türkiye',
+  '德國':'Germany',
+  '古拉索':'Curaçao',
+  '象牙海岸':'Ivory Coast',
+  '厄瓜多':'Ecuador',
+  '荷蘭':'Netherlands',
+  '日本':'Japan',
+  '突尼西亞':'Tunisia',
+  '瑞典':'Sweden',
+  '比利時':'Belgium',
+  '伊朗':'Iran',
+  '埃及':'Egypt',
+  '紐西蘭':'New Zealand',
+  '西班牙':'Spain',
+  '維德角':'Cape Verde',
+  '沙烏地阿拉伯':'Saudi Arabia',
+  '烏拉圭':'Uruguay',
+  '法國':'France',
+  '塞內加爾':'Senegal',
+  '伊拉克':'Iraq',
+  '挪威':'Norway',
+  '阿根廷':'Argentina',
+  '阿爾及利亞':'Algeria',
+  '奧地利':'Austria',
+  '約旦':'Jordan',
+  '葡萄牙':'Portugal',
+  '剛果民主共和國':'DR Congo',
+  '烏茲別克':'Uzbekistan',
+  '哥倫比亞':'Colombia',
+  '英格蘭':'England',
+  '克羅埃西亞':'Croatia',
+  '迦納':'Ghana',
+  '巴拿馬':'Panama'
+};
+
+// 中文+英文全名顯示
+function teamFull(zh) {
+  const en = TEAM_EN[zh];
+  return en ? `${zh} <span class="team-en">${en}</span>` : zh;
+}
+// 組別中文標籤
+function groupLabel(g) {
+  const gl = (g||'').replace('GROUP_','');
+  return gl ? `${gl} 組` : '';
+}
+// 賽事輪次標籤
+const ROUND_LABELS = {
+  GROUP_STAGE:'小組賽',
+  LAST_32:'32 強', LAST_16:'16 強',
+  QUARTER_FINALS:'8 強', SEMI_FINALS:'4 強',
+  THIRD_PLACE:'季軍戰', FINAL:'冠軍戰'
+};
+function roundLabel(stage, round) {
+  if (stage && ROUND_LABELS[stage]) return ROUND_LABELS[stage];
+  if (round) return `第 ${round} 輪`;
+  return '小組賽';
+}
+
+const SQUADS = {
+  '法國': {
+    flag:'🇫🇷', group:'I', coach:'迪迪埃·德尚', fifaRank:3, wc_titles:2,
+    players: [
+      { num:16, pos:'GK', name:'米格諾', en:'Mike Maignan', club:'AC米蘭', caps:32, goals:0,
+        seasons:[{y:'25/26',club:'AC米蘭',apps:30,g:0,a:0},{y:'24/25',club:'AC米蘭',apps:34,g:0,a:1},{y:'23/24',club:'AC米蘭',apps:32,g:0,a:0}] },
+      { num:5,  pos:'DF', name:'孔德', en:'Jules Koundé', club:'巴塞隆納', caps:53, goals:3,
+        seasons:[{y:'25/26',club:'巴塞隆納',apps:33,g:2,a:5},{y:'24/25',club:'巴塞隆納',apps:36,g:3,a:6},{y:'23/24',club:'巴塞隆納',apps:36,g:3,a:5}] },
+      { num:17, pos:'DF', name:'薩利巴', en:'William Saliba', club:'阿森納', caps:30, goals:1,
+        seasons:[{y:'25/26',club:'阿森納',apps:32,g:1,a:1},{y:'24/25',club:'阿森納',apps:36,g:2,a:1},{y:'23/24',club:'阿森納',apps:38,g:2,a:1}] },
+      { num:4,  pos:'DF', name:'烏帕梅卡諾', en:'Dayot Upamecano', club:'拜仁慕尼黑', caps:44, goals:2,
+        seasons:[{y:'25/26',club:'拜仁慕尼黑',apps:30,g:1,a:1},{y:'24/25',club:'拜仁慕尼黑',apps:28,g:1,a:0},{y:'23/24',club:'拜仁慕尼黑',apps:25,g:2,a:1}] },
+      { num:22, pos:'DF', name:'西奧·赫南德斯', en:'Theo Hernandez', club:'阿爾希拉爾', caps:42, goals:5,
+        seasons:[{y:'25/26',club:'阿爾希拉爾',apps:28,g:4,a:6},{y:'24/25',club:'AC米蘭',apps:33,g:6,a:8},{y:'23/24',club:'AC米蘭',apps:30,g:5,a:9}] },
+      { num:13, pos:'MF', name:'坎特', en:"N'Golo Kanté", club:'阿爾伊提哈德', caps:68, goals:2,
+        seasons:[{y:'25/26',club:'阿爾伊提哈德',apps:27,g:1,a:2},{y:'24/25',club:'阿爾伊提哈德',apps:26,g:1,a:3},{y:'23/24',club:'阿爾伊提哈德',apps:20,g:2,a:2}] },
+      { num:8,  pos:'MF', name:'楚阿梅尼', en:'Aurélien Tchouaméni', club:'皇家馬德里', caps:45, goals:4,
+        seasons:[{y:'25/26',club:'皇家馬德里',apps:34,g:2,a:3},{y:'24/25',club:'皇家馬德里',apps:36,g:2,a:2},{y:'23/24',club:'皇家馬德里',apps:32,g:1,a:1}] },
+      { num:6,  pos:'MF', name:'扎伊爾-埃梅里', en:'Warren Zaïre-Emery', club:'PSG', caps:14, goals:2,
+        seasons:[{y:'25/26',club:'PSG',apps:32,g:4,a:6},{y:'24/25',club:'PSG',apps:34,g:3,a:5},{y:'23/24',club:'PSG',apps:35,g:4,a:7}] },
+      { num:14, pos:'MF', name:'拉比奧特', en:'Adrien Rabiot', club:'AC米蘭', caps:56, goals:12,
+        seasons:[{y:'25/26',club:'AC米蘭',apps:30,g:5,a:4},{y:'24/25',club:'馬賽',apps:30,g:8,a:6},{y:'23/24',club:'尤文圖斯',apps:32,g:9,a:5}] },
+      { num:10, pos:'FW', name:'姆巴佩', en:'Kylian Mbappé', club:'皇家馬德里', caps:94, goals:55,
+        seasons:[{y:'25/26',club:'皇家馬德里',apps:36,g:34,a:8},{y:'24/25',club:'皇家馬德里',apps:38,g:31,a:5},{y:'23/24',club:'PSG',apps:29,g:27,a:7}] },
+      { num:11, pos:'FW', name:'登貝萊', en:'Ousmane Dembélé', club:'PSG', caps:60, goals:18,
+        seasons:[{y:'25/26',club:'PSG',apps:28,g:18,a:10},{y:'24/25',club:'PSG',apps:36,g:33,a:14},{y:'23/24',club:'PSG',apps:32,g:6,a:17}] },
+      { num:20, pos:'FW', name:'杜埃', en:'Désiré Doué', club:'PSG', caps:12, goals:4,
+        seasons:[{y:'25/26',club:'PSG',apps:30,g:10,a:11},{y:'24/25',club:'PSG',apps:35,g:15,a:12},{y:'23/24',club:'雷恩',apps:33,g:5,a:6}] },
+      { num:7,  pos:'FW', name:'奧利塞', en:'Michael Olise', club:'拜仁慕尼黑', caps:18, goals:7,
+        seasons:[{y:'25/26',club:'拜仁慕尼黑',apps:33,g:16,a:18},{y:'24/25',club:'拜仁慕尼黑',apps:34,g:17,a:15},{y:'23/24',club:'水晶宮',apps:19,g:10,a:6}] },
+      { num:15, pos:'FW', name:'圖拉姆', en:'Marcus Thuram', club:'國際米蘭', caps:36, goals:7,
+        seasons:[{y:'25/26',club:'國際米蘭',apps:32,g:14,a:6},{y:'24/25',club:'國際米蘭',apps:36,g:14,a:9},{y:'23/24',club:'國際米蘭',apps:35,g:13,a:13}] },
+    ]
+  },
+  '阿根廷': {
+    flag:'🇦🇷', group:'J', coach:'利奧內爾·斯卡洛尼', fifaRank:1, wc_titles:3,
+    players: [
+      { num:23, pos:'GK', name:'大馬丁', en:'Emiliano Martínez', club:'阿斯頓維拉', caps:52, goals:0,
+        seasons:[{y:'25/26',club:'阿斯頓維拉',apps:34,g:0,a:0},{y:'24/25',club:'阿斯頓維拉',apps:36,g:0,a:0},{y:'23/24',club:'阿斯頓維拉',apps:38,g:0,a:0}] },
+      { num:13, pos:'DF', name:'羅梅羅', en:'Cristian Romero', club:'熱刺', caps:46, goals:4,
+        seasons:[{y:'25/26',club:'熱刺',apps:30,g:2,a:0},{y:'24/25',club:'熱刺',apps:28,g:2,a:1},{y:'23/24',club:'熱刺',apps:30,g:3,a:2}] },
+      { num:25, pos:'DF', name:'利桑德羅·馬丁內斯', en:'Lisandro Martínez', club:'曼聯', caps:28, goals:1,
+        seasons:[{y:'25/26',club:'曼聯',apps:26,g:1,a:1},{y:'24/25',club:'曼聯',apps:18,g:1,a:0},{y:'23/24',club:'曼聯',apps:14,g:0,a:0}] },
+      { num:19, pos:'DF', name:'奧塔門迪', en:'Nicolás Otamendi', club:'本菲卡', caps:118, goals:8,
+        seasons:[{y:'25/26',club:'本菲卡',apps:28,g:2,a:0},{y:'24/25',club:'本菲卡',apps:30,g:3,a:1},{y:'23/24',club:'本菲卡',apps:32,g:4,a:0}] },
+      { num:3,  pos:'DF', name:'塔利亞菲科', en:'Nicolás Tagliafico', club:'里昂', caps:64, goals:1,
+        seasons:[{y:'25/26',club:'里昂',apps:30,g:1,a:3},{y:'24/25',club:'里昂',apps:32,g:1,a:2},{y:'23/24',club:'里昂',apps:30,g:0,a:2}] },
+      { num:7,  pos:'MF', name:'德保羅', en:'Rodrigo De Paul', club:'國際邁阿密', caps:80, goals:8,
+        seasons:[{y:'25/26',club:'國際邁阿密',apps:24,g:3,a:8},{y:'24/25',club:'馬德里競技',apps:32,g:4,a:7},{y:'23/24',club:'馬德里競技',apps:30,g:5,a:8}] },
+      { num:20, pos:'MF', name:'麥卡利斯特', en:'Alexis Mac Allister', club:'利物浦', caps:46, goals:10,
+        seasons:[{y:'25/26',club:'利物浦',apps:34,g:7,a:8},{y:'24/25',club:'利物浦',apps:38,g:9,a:11},{y:'23/24',club:'利物浦',apps:36,g:10,a:9}] },
+      { num:24, pos:'MF', name:'恩佐·費爾南德斯', en:'Enzo Fernández', club:'切爾西', caps:42, goals:6,
+        seasons:[{y:'25/26',club:'切爾西',apps:34,g:9,a:12},{y:'24/25',club:'切爾西',apps:36,g:8,a:10},{y:'23/24',club:'切爾西',apps:34,g:5,a:4}] },
+      { num:10, pos:'FW', name:'梅西', en:'Lionel Messi', club:'國際邁阿密', caps:196, goals:114,
+        seasons:[{y:'25/26',club:'國際邁阿密',apps:26,g:22,a:14},{y:'24/25',club:'國際邁阿密',apps:22,g:18,a:12},{y:'23/24',club:'國際邁阿密',apps:19,g:14,a:11}] },
+      { num:9,  pos:'FW', name:'胡利安·阿爾瓦雷斯', en:'Julián Álvarez', club:'馬德里競技', caps:48, goals:16,
+        seasons:[{y:'25/26',club:'馬德里競技',apps:35,g:24,a:7},{y:'24/25',club:'馬德里競技',apps:38,g:25,a:6},{y:'23/24',club:'曼城',apps:36,g:11,a:9}] },
+      { num:22, pos:'FW', name:'勞塔羅', en:'Lautaro Martínez', club:'國際米蘭', caps:78, goals:36,
+        seasons:[{y:'25/26',club:'國際米蘭',apps:33,g:22,a:5},{y:'24/25',club:'國際米蘭',apps:36,g:25,a:8},{y:'23/24',club:'國際米蘭',apps:34,g:24,a:7}] },
+      { num:17, pos:'FW', name:'尼可·帕斯', en:'Nico Paz', club:'科莫', caps:10, goals:3,
+        seasons:[{y:'25/26',club:'科莫',apps:32,g:10,a:12},{y:'24/25',club:'科莫',apps:34,g:7,a:9},{y:'23/24',club:'皇家馬德里',apps:8,g:1,a:1}] },
+    ]
+  },
+  '巴西': {
+    flag:'🇧🇷', group:'C', coach:'卡洛·安切洛蒂', fifaRank:6, wc_titles:5,
+    players: [
+      { num:1,  pos:'GK', name:'阿利松', en:'Alisson Becker', club:'利物浦', caps:78, goals:0,
+        seasons:[{y:'25/26',club:'利物浦',apps:30,g:0,a:0},{y:'24/25',club:'利物浦',apps:30,g:0,a:0},{y:'23/24',club:'利物浦',apps:32,g:0,a:0}] },
+      { num:4,  pos:'DF', name:'馬奎諾斯', en:'Marquinhos', club:'PSG', caps:98, goals:9,
+        seasons:[{y:'25/26',club:'PSG',apps:30,g:2,a:1},{y:'24/25',club:'PSG',apps:33,g:3,a:1},{y:'23/24',club:'PSG',apps:35,g:4,a:2}] },
+      { num:6,  pos:'DF', name:'加布里埃爾', en:'Gabriel Magalhães', club:'阿森納', caps:22, goals:3,
+        seasons:[{y:'25/26',club:'阿森納',apps:30,g:3,a:2},{y:'24/25',club:'阿森納',apps:34,g:3,a:1},{y:'23/24',club:'阿森納',apps:38,g:4,a:1}] },
+      { num:2,  pos:'DF', name:'達尼洛', en:'Danilo', club:'弗拉門戈', caps:64, goals:3,
+        seasons:[{y:'25/26',club:'弗拉門戈',apps:28,g:1,a:1},{y:'24/25',club:'弗拉門戈',apps:24,g:1,a:0},{y:'23/24',club:'尤文圖斯',apps:28,g:1,a:1}] },
+      { num:5,  pos:'MF', name:'卡塞米羅', en:'Casemiro', club:'曼聯', caps:86, goals:9,
+        seasons:[{y:'25/26',club:'曼聯',apps:30,g:3,a:2},{y:'24/25',club:'曼聯',apps:28,g:4,a:3},{y:'23/24',club:'曼聯',apps:24,g:3,a:2}] },
+      { num:8,  pos:'MF', name:'布魯諾·吉馬良斯', en:'Bruno Guimarães', club:'紐卡索', caps:42, goals:5,
+        seasons:[{y:'25/26',club:'紐卡索',apps:34,g:6,a:8},{y:'24/25',club:'紐卡索',apps:37,g:4,a:8},{y:'23/24',club:'紐卡索',apps:37,g:7,a:8}] },
+      { num:7,  pos:'MF', name:'帕奎塔', en:'Lucas Paquetá', club:'西漢姆聯', caps:54, goals:11,
+        seasons:[{y:'25/26',club:'西漢姆聯',apps:30,g:5,a:5},{y:'24/25',club:'西漢姆聯',apps:32,g:4,a:4},{y:'23/24',club:'西漢姆聯',apps:35,g:4,a:7}] },
+      { num:10, pos:'FW', name:'尼馬', en:'Neymar', club:'山度士', caps:132, goals:81,
+        seasons:[{y:'25/26',club:'山度士',apps:24,g:12,a:8},{y:'24/25',club:'山度士',apps:14,g:5,a:3},{y:'23/24',club:'阿爾希拉爾',apps:6,g:2,a:1}] },
+      { num:9,  pos:'FW', name:'維尼修斯', en:'Vinícius Júnior', club:'皇家馬德里', caps:56, goals:18,
+        seasons:[{y:'25/26',club:'皇家馬德里',apps:35,g:20,a:12},{y:'24/25',club:'皇家馬德里',apps:38,g:24,a:14},{y:'23/24',club:'皇家馬德里',apps:36,g:24,a:11}] },
+      { num:11, pos:'FW', name:'拉菲尼亞', en:'Raphinha', club:'巴塞隆納', caps:42, goals:14,
+        seasons:[{y:'25/26',club:'巴塞隆納',apps:32,g:16,a:14},{y:'24/25',club:'巴塞隆納',apps:37,g:18,a:21},{y:'23/24',club:'巴塞隆納',apps:36,g:10,a:13}] },
+      { num:21, pos:'FW', name:'恩德里克', en:'Endrick', club:'里昂（租借）', caps:16, goals:4,
+        seasons:[{y:'25/26',club:'里昂',apps:16,g:8,a:2},{y:'24/25',club:'皇家馬德里',apps:24,g:7,a:1},{y:'23/24',club:'帕梅拉斯',apps:30,g:11,a:2}] },
+      { num:19, pos:'FW', name:'馬泰烏斯·庫尼亞', en:'Matheus Cunha', club:'曼聯', caps:18, goals:5,
+        seasons:[{y:'25/26',club:'曼聯',apps:32,g:13,a:7},{y:'24/25',club:'狼隊',apps:33,g:15,a:6},{y:'23/24',club:'狼隊',apps:32,g:12,a:7}] },
+    ]
+  },
+  '英格蘭': {
+    flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿', group:'L', coach:'湯瑪斯·圖赫爾', fifaRank:4, wc_titles:1,
+    players: [
+      { num:1,  pos:'GK', name:'皮克福德', en:'Jordan Pickford', club:'艾弗頓', caps:78, goals:0,
+        seasons:[{y:'25/26',club:'艾弗頓',apps:32,g:0,a:0},{y:'24/25',club:'艾弗頓',apps:38,g:0,a:1},{y:'23/24',club:'艾弗頓',apps:38,g:0,a:0}] },
+      { num:5,  pos:'DF', name:'斯通斯', en:'John Stones', club:'曼城', caps:84, goals:3,
+        seasons:[{y:'25/26',club:'曼城',apps:26,g:1,a:1},{y:'24/25',club:'曼城',apps:18,g:1,a:0},{y:'23/24',club:'曼城',apps:22,g:1,a:1}] },
+      { num:6,  pos:'DF', name:'圭伊', en:'Marc Guéhi', club:'水晶宮', caps:32, goals:1,
+        seasons:[{y:'25/26',club:'水晶宮',apps:32,g:2,a:1},{y:'24/25',club:'水晶宮',apps:34,g:2,a:0},{y:'23/24',club:'水晶宮',apps:25,g:1,a:0}] },
+      { num:2,  pos:'DF', name:'里斯·詹姆斯', en:'Reece James', club:'切爾西', caps:22, goals:1,
+        seasons:[{y:'25/26',club:'切爾西',apps:30,g:2,a:6},{y:'24/25',club:'切爾西',apps:26,g:1,a:2},{y:'23/24',club:'切爾西',apps:10,g:0,a:1}] },
+      { num:4,  pos:'MF', name:'萊斯', en:'Declan Rice', club:'阿森納', caps:68, goals:6,
+        seasons:[{y:'25/26',club:'阿森納',apps:34,g:6,a:9},{y:'24/25',club:'阿森納',apps:35,g:4,a:7},{y:'23/24',club:'阿森納',apps:38,g:7,a:8}] },
+      { num:10, pos:'MF', name:'貝林漢', en:'Jude Bellingham', club:'皇家馬德里', caps:48, goals:14,
+        seasons:[{y:'25/26',club:'皇家馬德里',apps:32,g:12,a:9},{y:'24/25',club:'皇家馬德里',apps:38,g:19,a:11},{y:'23/24',club:'皇家馬德里',apps:35,g:23,a:13}] },
+      { num:11, pos:'MF', name:'埃澤', en:'Eberechi Eze', club:'阿森納', caps:18, goals:6,
+        seasons:[{y:'25/26',club:'阿森納',apps:33,g:11,a:8},{y:'24/25',club:'水晶宮',apps:34,g:14,a:11},{y:'23/24',club:'水晶宮',apps:27,g:11,a:4}] },
+      { num:8,  pos:'MF', name:'梅努', en:'Kobbie Mainoo', club:'曼聯', caps:22, goals:2,
+        seasons:[{y:'25/26',club:'曼聯',apps:28,g:3,a:3},{y:'24/25',club:'曼聯',apps:26,g:2,a:2},{y:'23/24',club:'曼聯',apps:32,g:3,a:1}] },
+      { num:9,  pos:'FW', name:'凱恩', en:'Harry Kane', club:'拜仁慕尼黑', caps:108, goals:74,
+        seasons:[{y:'25/26',club:'拜仁慕尼黑',apps:33,g:35,a:8},{y:'24/25',club:'拜仁慕尼黑',apps:36,g:32,a:9},{y:'23/24',club:'拜仁慕尼黑',apps:32,g:36,a:8}] },
+      { num:7,  pos:'FW', name:'薩卡', en:'Bukayo Saka', club:'阿森納', caps:64, goals:19,
+        seasons:[{y:'25/26',club:'阿森納',apps:32,g:14,a:12},{y:'24/25',club:'阿森納',apps:26,g:10,a:11},{y:'23/24',club:'阿森納',apps:35,g:16,a:14}] },
+      { num:19, pos:'FW', name:'拉什福德', en:'Marcus Rashford', club:'巴塞隆納（租借）', caps:64, goals:18,
+        seasons:[{y:'25/26',club:'巴塞隆納',apps:32,g:12,a:10},{y:'24/25',club:'阿斯頓維拉',apps:17,g:4,a:6},{y:'23/24',club:'曼聯',apps:33,g:7,a:2}] },
+      { num:21, pos:'FW', name:'戈登', en:'Anthony Gordon', club:'紐卡索', caps:24, goals:5,
+        seasons:[{y:'25/26',club:'紐卡索',apps:33,g:10,a:7},{y:'24/25',club:'紐卡索',apps:34,g:6,a:7},{y:'23/24',club:'紐卡索',apps:35,g:11,a:10}] },
+    ]
+  },
+  '西班牙': {
+    flag:'🇪🇸', group:'H', coach:'路易斯·德拉富恩特', fifaRank:2, wc_titles:1,
+    players: [
+      { num:23, pos:'GK', name:'烏奈·西蒙', en:'Unai Simón', club:'畢爾包競技', caps:50, goals:0,
+        seasons:[{y:'25/26',club:'畢爾包競技',apps:32,g:0,a:0},{y:'24/25',club:'畢爾包競技',apps:36,g:0,a:0},{y:'23/24',club:'畢爾包競技',apps:36,g:0,a:0}] },
+      { num:5,  pos:'DF', name:'庫巴爾西', en:'Pau Cubarsí', club:'巴塞隆納', caps:16, goals:0,
+        seasons:[{y:'25/26',club:'巴塞隆納',apps:34,g:1,a:2},{y:'24/25',club:'巴塞隆納',apps:36,g:1,a:1},{y:'23/24',club:'巴塞隆納',apps:24,g:0,a:1}] },
+      { num:14, pos:'DF', name:'拉波爾特', en:'Aymeric Laporte', club:'畢爾包競技', caps:42, goals:2,
+        seasons:[{y:'25/26',club:'畢爾包競技',apps:28,g:1,a:0},{y:'24/25',club:'阿爾納斯爾',apps:26,g:2,a:1},{y:'23/24',club:'阿爾納斯爾',apps:30,g:2,a:0}] },
+      { num:24, pos:'DF', name:'庫庫雷利亞', en:'Marc Cucurella', club:'切爾西', caps:28, goals:2,
+        seasons:[{y:'25/26',club:'切爾西',apps:34,g:3,a:5},{y:'24/25',club:'切爾西',apps:36,g:3,a:6},{y:'23/24',club:'切爾西',apps:26,g:1,a:1}] },
+      { num:16, pos:'MF', name:'羅德里', en:'Rodri', club:'曼城', caps:60, goals:9,
+        seasons:[{y:'25/26',club:'曼城',apps:28,g:3,a:5},{y:'24/25',club:'曼城',apps:5,g:0,a:1},{y:'23/24',club:'曼城',apps:34,g:8,a:9}] },
+      { num:8,  pos:'MF', name:'佩德里', en:'Pedri', club:'巴塞隆納', caps:38, goals:5,
+        seasons:[{y:'25/26',club:'巴塞隆納',apps:33,g:5,a:8},{y:'24/25',club:'巴塞隆納',apps:37,g:6,a:8},{y:'23/24',club:'巴塞隆納',apps:20,g:3,a:5}] },
+      { num:6,  pos:'MF', name:'蘇比門迪', en:'Martín Zubimendi', club:'阿森納', caps:24, goals:2,
+        seasons:[{y:'25/26',club:'阿森納',apps:34,g:3,a:3},{y:'24/25',club:'皇家社會',apps:35,g:2,a:2},{y:'23/24',club:'皇家社會',apps:34,g:1,a:1}] },
+      { num:9,  pos:'FW', name:'亞馬爾', en:'Lamine Yamal', club:'巴塞隆納', caps:28, goals:11,
+        seasons:[{y:'25/26',club:'巴塞隆納',apps:33,g:17,a:15},{y:'24/25',club:'巴塞隆納',apps:35,g:18,a:16},{y:'23/24',club:'巴塞隆納',apps:36,g:15,a:17}] },
+      { num:11, pos:'FW', name:'尼可·威廉斯', en:'Nico Williams', club:'畢爾包競技', caps:34, goals:9,
+        seasons:[{y:'25/26',club:'畢爾包競技',apps:30,g:10,a:9},{y:'24/25',club:'畢爾包競技',apps:34,g:11,a:7},{y:'23/24',club:'畢爾包競技',apps:31,g:8,a:19}] },
+      { num:10, pos:'FW', name:'奧爾莫', en:'Dani Olmo', club:'巴塞隆納', caps:46, goals:12,
+        seasons:[{y:'25/26',club:'巴塞隆納',apps:30,g:9,a:6},{y:'24/25',club:'巴塞隆納',apps:32,g:10,a:7},{y:'23/24',club:'RB萊比錫',apps:25,g:8,a:5}] },
+      { num:7,  pos:'FW', name:'費蘭·托雷斯', en:'Ferran Torres', club:'巴塞隆納', caps:50, goals:22,
+        seasons:[{y:'25/26',club:'巴塞隆納',apps:33,g:15,a:6},{y:'24/25',club:'巴塞隆納',apps:35,g:14,a:8},{y:'23/24',club:'巴塞隆納',apps:32,g:12,a:7}] },
+      { num:21, pos:'FW', name:'奧亞薩瓦爾', en:'Mikel Oyarzabal', club:'皇家社會', caps:44, goals:14,
+        seasons:[{y:'25/26',club:'皇家社會',apps:32,g:12,a:8},{y:'24/25',club:'皇家社會',apps:36,g:13,a:7},{y:'23/24',club:'皇家社會',apps:34,g:11,a:8}] },
+    ]
+  },
+  '德國': {
+    flag:'🇩🇪', group:'E', coach:'朱利安·納格爾斯曼', fifaRank:9, wc_titles:4,
+    players: [
+      { num:1,  pos:'GK', name:'諾伊爾', en:'Manuel Neuer', club:'拜仁慕尼黑', caps:126, goals:0,
+        seasons:[{y:'25/26',club:'拜仁慕尼黑',apps:30,g:0,a:0},{y:'24/25',club:'拜仁慕尼黑',apps:32,g:0,a:0},{y:'23/24',club:'拜仁慕尼黑',apps:28,g:0,a:0}] },
+      { num:2,  pos:'DF', name:'呂迪格', en:'Antonio Rüdiger', club:'皇家馬德里', caps:78, goals:5,
+        seasons:[{y:'25/26',club:'皇家馬德里',apps:28,g:1,a:1},{y:'24/25',club:'皇家馬德里',apps:34,g:3,a:1},{y:'23/24',club:'皇家馬德里',apps:36,g:4,a:0}] },
+      { num:4,  pos:'DF', name:'塔', en:'Jonathan Tah', club:'拜仁慕尼黑', caps:38, goals:1,
+        seasons:[{y:'25/26',club:'拜仁慕尼黑',apps:32,g:2,a:1},{y:'24/25',club:'勒沃庫森',apps:33,g:3,a:1},{y:'23/24',club:'勒沃庫森',apps:33,g:3,a:0}] },
+      { num:15, pos:'DF', name:'施洛特貝克', en:'Nico Schlotterbeck', club:'多特蒙德', caps:24, goals:1,
+        seasons:[{y:'25/26',club:'多特蒙德',apps:30,g:2,a:3},{y:'24/25',club:'多特蒙德',apps:28,g:1,a:4},{y:'23/24',club:'多特蒙德',apps:32,g:1,a:3}] },
+      { num:6,  pos:'MF', name:'金米希', en:'Joshua Kimmich', club:'拜仁慕尼黑', caps:102, goals:14,
+        seasons:[{y:'25/26',club:'拜仁慕尼黑',apps:32,g:3,a:11},{y:'24/25',club:'拜仁慕尼黑',apps:34,g:5,a:14},{y:'23/24',club:'拜仁慕尼黑',apps:32,g:4,a:12}] },
+      { num:10, pos:'MF', name:'穆西亞拉', en:'Jamal Musiala', club:'拜仁慕尼黑', caps:44, goals:17,
+        seasons:[{y:'25/26',club:'拜仁慕尼黑',apps:22,g:9,a:7},{y:'24/25',club:'拜仁慕尼黑',apps:34,g:18,a:11},{y:'23/24',club:'拜仁慕尼黑',apps:32,g:12,a:9}] },
+      { num:14, pos:'MF', name:'維爾茨', en:'Florian Wirtz', club:'利物浦', caps:36, goals:8,
+        seasons:[{y:'25/26',club:'利物浦',apps:33,g:10,a:14},{y:'24/25',club:'勒沃庫森',apps:31,g:10,a:12},{y:'23/24',club:'勒沃庫森',apps:34,g:11,a:11}] },
+      { num:19, pos:'MF', name:'薩內', en:'Leroy Sané', club:'加拉塔薩雷', caps:70, goals:14,
+        seasons:[{y:'25/26',club:'加拉塔薩雷',apps:30,g:12,a:9},{y:'24/25',club:'拜仁慕尼黑',apps:32,g:9,a:6},{y:'23/24',club:'拜仁慕尼黑',apps:32,g:8,a:11}] },
+      { num:8,  pos:'MF', name:'戈雷茨卡', en:'Leon Goretzka', club:'拜仁慕尼黑', caps:62, goals:14,
+        seasons:[{y:'25/26',club:'拜仁慕尼黑',apps:28,g:4,a:3},{y:'24/25',club:'拜仁慕尼黑',apps:29,g:5,a:4},{y:'23/24',club:'拜仁慕尼黑',apps:28,g:3,a:5}] },
+      { num:7,  pos:'FW', name:'哈弗茨', en:'Kai Havertz', club:'阿森納', caps:56, goals:20,
+        seasons:[{y:'25/26',club:'阿森納',apps:24,g:9,a:4},{y:'24/25',club:'阿森納',apps:30,g:15,a:5},{y:'23/24',club:'阿森納',apps:36,g:14,a:7}] },
+      { num:9,  pos:'FW', name:'沃爾特馬德', en:'Nick Woltemade', club:'紐卡索', caps:14, goals:6,
+        seasons:[{y:'25/26',club:'紐卡索',apps:32,g:15,a:4},{y:'24/25',club:'斯圖加特',apps:33,g:17,a:3},{y:'23/24',club:'不萊梅',apps:25,g:5,a:2}] },
+      { num:26, pos:'FW', name:'温达夫', en:'Deniz Undav', club:'斯圖加特', caps:22, goals:8,
+        seasons:[{y:'25/26',club:'斯圖加特',apps:28,g:13,a:6},{y:'24/25',club:'斯圖加特',apps:26,g:10,a:5},{y:'23/24',club:'斯圖加特',apps:30,g:18,a:10}] },
+    ]
+  },
+  '墨西哥': { flag:'🇲🇽', group:'A', coach:'哈維爾·阿吉雷', players: [
+    { num:1, pos:'GK', en:'Raul Rangel' },
+    { num:2, pos:'GK', en:'Guillermo Ochoa' },
+    { num:3, pos:'GK', en:'Carlos Acevedo' },
+    { num:4, pos:'DF', en:'Jorge Sanchez' },
+    { num:5, pos:'DF', en:'Israel Reyes' },
+    { num:6, pos:'DF', en:'Cesar Montes' },
+    { num:7, pos:'DF', en:'Johan Vasquez' },
+    { num:8, pos:'DF', en:'Jesus Gallardo' },
+    { num:9, pos:'DF', en:'Mateo Chavez' },
+    { num:10, pos:'DF', en:'Edson Alvarez' },
+    { num:11, pos:'MF', en:'Erik Lira' },
+    { num:12, pos:'MF', en:'Orbelin Pineda' },
+    { num:13, pos:'MF', en:'Alvaro Fidalgo' },
+    { num:14, pos:'MF', en:'Brian Gutierrez' },
+    { num:15, pos:'MF', en:'Luis Romo' },
+    { num:16, pos:'MF', en:'Obed Vargas' },
+    { num:17, pos:'MF', en:'Gilberto Mora' },
+    { num:18, pos:'MF', en:'Luis Chavez' },
+    { num:19, pos:'FW', en:'Roberto Alvarado' },
+    { num:20, pos:'FW', en:'Cesar Huerta' },
+    { num:21, pos:'FW', en:'Alexis Vega' },
+    { num:22, pos:'FW', en:'Julian Quinones' },
+    { num:23, pos:'FW', en:'Guillermo Martinez' },
+    { num:24, pos:'FW', en:'Armando Gonzalez' },
+    { num:25, pos:'FW', en:'Santiago Gimenez' },
+    { num:26, pos:'FW', en:'Raul Jimenez' },
+  ]},
+  '南韓': { flag:'🇰🇷', group:'A', coach:'洪明甫', players: [
+    { num:1, pos:'GK', en:'Song Bumkeun' },
+    { num:2, pos:'GK', en:'Jo Hyeonwoo' },
+    { num:3, pos:'GK', en:'Kim Seung-gyu' },
+    { num:4, pos:'DF', en:'Jens Castrop' },
+    { num:5, pos:'DF', en:'Lee Hanbeom' },
+    { num:6, pos:'DF', en:'Park Jinseob' },
+    { num:7, pos:'DF', en:'Lee Kihyuk' },
+    { num:8, pos:'DF', en:'Kim Minjae' },
+    { num:9, pos:'DF', en:'Kim Moonhwan' },
+    { num:10, pos:'DF', en:'Kim Taehyeon' },
+    { num:11, pos:'DF', en:'Lee Taeseok' },
+    { num:12, pos:'DF', en:'Seol Youngwoo' },
+    { num:13, pos:'DF', en:'Cho Wije' },
+    { num:14, pos:'MF', en:'Lee Donggyeong' },
+    { num:15, pos:'MF', en:'Hwang Heechan' },
+    { num:16, pos:'MF', en:'Yang Hyunjun' },
+    { num:17, pos:'MF', en:'Hwang Inbeom' },
+    { num:18, pos:'MF', en:'Lee Jaesung' },
+    { num:19, pos:'MF', en:'Kim Jingyu' },
+    { num:20, pos:'MF', en:'Eom Jisung' },
+    { num:21, pos:'MF', en:'Bae Junho' },
+    { num:22, pos:'MF', en:'Lee Kangin' },
+    { num:23, pos:'MF', en:'Paik Seungho' },
+    { num:24, pos:'FW', en:'Cho Guesung' },
+    { num:25, pos:'FW', en:'Son Heungmin' },
+    { num:26, pos:'FW', en:'Oh Hyeongyu' },
+  ]},
+  '南非': { flag:'🇿🇦', group:'A', coach:'雨果·布魯斯', players: [
+    { num:1, pos:'GK', en:'Ronwen Williams' },
+    { num:2, pos:'GK', en:'Ricardo Goss' },
+    { num:3, pos:'GK', en:'Sipho Chaine' },
+    { num:4, pos:'DF', en:'Aubrey Modiba' },
+    { num:5, pos:'DF', en:'Khuliso Mudau' },
+    { num:6, pos:'DF', en:'Khulumani Ndamane' },
+    { num:7, pos:'DF', en:'Kamogelo Sebelebele' },
+    { num:8, pos:'DF', en:'Nkosinathi Sibisi' },
+    { num:9, pos:'DF', en:'Bradley Cross' },
+    { num:10, pos:'DF', en:'Samukele Kabini' },
+    { num:11, pos:'DF', en:'Olwethu Makhanya' },
+    { num:12, pos:'DF', en:'Thabang Matuludi' },
+    { num:13, pos:'DF', en:'Mbekezeli Mbokazi' },
+    { num:14, pos:'DF', en:'Ime Okon' },
+    { num:15, pos:'MF', en:'Oswin Appollis' },
+    { num:16, pos:'MF', en:'Thalente Mbatha' },
+    { num:17, pos:'MF', en:'Relebohile Mofokeng' },
+    { num:18, pos:'MF', en:'Jayden Adams' },
+    { num:19, pos:'MF', en:'Teboho Mokoena' },
+    { num:20, pos:'MF', en:'Themba Zwane' },
+    { num:21, pos:'MF', en:'Sphephelo Sithole' },
+    { num:22, pos:'FW', en:'Evidence Makgopa' },
+    { num:23, pos:'FW', en:'Tshepang Moremi' },
+    { num:24, pos:'FW', en:'Lyle Foster' },
+    { num:25, pos:'FW', en:'Thapelo Maseko' },
+    { num:26, pos:'FW', en:'Iqraam Rayners' },
+  ]},
+  '捷克': { flag:'🇨🇿', group:'A', coach:'米羅斯拉夫·庫貝克', players: [
+    { num:1, pos:'GK', en:'Lukas Hornicek' },
+    { num:2, pos:'GK', en:'Matej Kovar' },
+    { num:3, pos:'GK', en:'Jindrich Stanek' },
+    { num:4, pos:'DF', en:'Vladimir Coufal' },
+    { num:5, pos:'DF', en:'David Doudera' },
+    { num:6, pos:'DF', en:'Tomas Holes' },
+    { num:7, pos:'DF', en:'Robin Hranac' },
+    { num:8, pos:'DF', en:'Stepan Chaloupek' },
+    { num:9, pos:'DF', en:'David Jurasek' },
+    { num:10, pos:'DF', en:'Ladislav Krejci' },
+    { num:11, pos:'DF', en:'Jaroslav Zeleny' },
+    { num:12, pos:'DF', en:'David Zima' },
+    { num:13, pos:'MF', en:'Lukas Cerv' },
+    { num:14, pos:'MF', en:'Vladimir Darida' },
+    { num:15, pos:'MF', en:'Lukas Provod' },
+    { num:16, pos:'MF', en:'Michal Sadilek' },
+    { num:17, pos:'MF', en:'Hugo Sochurek' },
+    { num:18, pos:'MF', en:'Alexandr Sojka' },
+    { num:19, pos:'MF', en:'Tomas Soucek' },
+    { num:20, pos:'MF', en:'Pavel Sulc' },
+    { num:21, pos:'MF', en:'Denis Visinsky' },
+    { num:22, pos:'FW', en:'Adam Hlozek' },
+    { num:23, pos:'FW', en:'Tomas Chory' },
+    { num:24, pos:'FW', en:'Mojmir Chytil' },
+    { num:25, pos:'FW', en:'Jan Kuchta' },
+    { num:26, pos:'FW', en:'Patrik Schick' },
+  ]},
+  '加拿大': { flag:'🇨🇦', group:'B', coach:'傑西·馬什', players: [
+    { num:1, pos:'GK', en:'Dayne St Clair' },
+    { num:2, pos:'GK', en:'Maxime Crepeau' },
+    { num:3, pos:'GK', en:'Owen Goodman' },
+    { num:4, pos:'DF', en:'Alistair Johnston' },
+    { num:5, pos:'DF', en:'Derek Cornelius' },
+    { num:6, pos:'DF', en:'Richie Laryea' },
+    { num:7, pos:'DF', en:'Niko Sigur' },
+    { num:8, pos:'DF', en:'Joel Waterman' },
+    { num:9, pos:'DF', en:'Luc de Fougerolles' },
+    { num:10, pos:'DF', en:'Moise Bombito' },
+    { num:11, pos:'DF', en:'Alphonso Davies' },
+    { num:12, pos:'DF', en:'Alfie Jones' },
+    { num:13, pos:'MF', en:'Stephen Eustaquio' },
+    { num:14, pos:'MF', en:'Ismael Kone' },
+    { num:15, pos:'MF', en:'Tajon Buchanan' },
+    { num:16, pos:'MF', en:'Mathieu Choiniere' },
+    { num:17, pos:'MF', en:'Ali Ahmed' },
+    { num:18, pos:'MF', en:'Nathan Saliba' },
+    { num:19, pos:'MF', en:'Liam Millar' },
+    { num:20, pos:'MF', en:'Jacob Shaffelburg' },
+    { num:21, pos:'MF', en:'Jonathan Osorio' },
+    { num:22, pos:'FW', en:'Jonathan David' },
+    { num:23, pos:'FW', en:'Cyle Larin' },
+    { num:24, pos:'FW', en:'Tani Oluwaseyi' },
+    { num:25, pos:'FW', en:'Promise David' },
+  ]},
+  '瑞士': { flag:'🇨🇭', group:'B', coach:'穆拉特·雅金', players: [
+    { num:1, pos:'GK', en:'Marvin Keller' },
+    { num:2, pos:'GK', en:'Gregor Kobel' },
+    { num:3, pos:'GK', en:'Yvon Mvogo' },
+    { num:4, pos:'DF', en:'Manuel Akanji' },
+    { num:5, pos:'DF', en:'Aurele Amenda' },
+    { num:6, pos:'DF', en:'Eray Comert' },
+    { num:7, pos:'DF', en:'Nico Elvedi' },
+    { num:8, pos:'DF', en:'Luca Jaquez' },
+    { num:9, pos:'DF', en:'Miro Muheim' },
+    { num:10, pos:'DF', en:'Ricardo Rodriguez' },
+    { num:11, pos:'DF', en:'Silvan Widmer' },
+    { num:12, pos:'MF', en:'Michel Aebischer' },
+    { num:13, pos:'MF', en:'Christian Fassnacht' },
+    { num:14, pos:'MF', en:'Remo Freuler' },
+    { num:15, pos:'MF', en:'Ardon Jashari' },
+    { num:16, pos:'MF', en:'Fabian Rieder' },
+    { num:17, pos:'MF', en:'Djibril Sow' },
+    { num:18, pos:'MF', en:'Cedric Itten' },
+    { num:19, pos:'MF', en:'Granit Xhaka' },
+    { num:20, pos:'MF', en:'Denis Zakaria' },
+    { num:21, pos:'FW', en:'Ruben Vargas' },
+    { num:22, pos:'FW', en:'Zeki Amdouni' },
+    { num:23, pos:'FW', en:'Breel Embolo' },
+    { num:24, pos:'FW', en:'Dan Ndoye' },
+    { num:25, pos:'FW', en:'Noah Okafor' },
+    { num:26, pos:'FW', en:'Johan Manzambi' },
+  ]},
+  '卡達': { flag:'🇶🇦', group:'B', coach:'胡倫·洛佩特吉', players: [
+    { num:1, pos:'GK', en:'Salah Zakaria' },
+    { num:2, pos:'GK', en:'Meshaal Barsham' },
+    { num:3, pos:'GK', en:'Mahmoud Abunada' },
+    { num:4, pos:'DF', en:'Boualem Khoukhi' },
+    { num:5, pos:'DF', en:'Pedro Miguel' },
+    { num:6, pos:'DF', en:'Sultan Al Brake' },
+    { num:7, pos:'DF', en:'Al Hashmi Al Hussain' },
+    { num:8, pos:'DF', en:'Ayoub Al Alawi' },
+    { num:9, pos:'DF', en:'Issa Laye' },
+    { num:10, pos:'DF', en:'Lucas Mendes' },
+    { num:11, pos:'DF', en:'Homam Al Amin' },
+    { num:12, pos:'MF', en:'Ahmed Fathi' },
+    { num:13, pos:'MF', en:'Jassim Gaber' },
+    { num:14, pos:'MF', en:'Assim Madibo' },
+    { num:15, pos:'MF', en:'Abdulaziz Hatem' },
+    { num:16, pos:'MF', en:'Karim Boudiaf' },
+    { num:17, pos:'MF', en:'Mohammed Mannai' },
+    { num:18, pos:'FW', en:'Almoez Ali' },
+    { num:19, pos:'FW', en:'Akram Afif' },
+    { num:20, pos:'FW', en:'Tahsin Mohammed' },
+    { num:21, pos:'FW', en:'Edmilson Junior' },
+    { num:22, pos:'FW', en:'Ahmed Al-Janehi' },
+    { num:23, pos:'FW', en:'Ahmed Alaa' },
+    { num:24, pos:'FW', en:'Hassan Al Haydos' },
+    { num:25, pos:'FW', en:'Mohammed Muntari' },
+    { num:26, pos:'FW', en:'Yusuf Abdurisag' },
+  ]},
+  '波士尼亞': { flag:'🇧🇦', group:'B', coach:'塞爾蓋·巴爾巴雷茲', players: [
+    { num:1, pos:'GK', en:'Nikola Vasilj' },
+    { num:2, pos:'GK', en:'Martin Zlomislic' },
+    { num:3, pos:'GK', en:'Osman Hadzikic' },
+    { num:4, pos:'DF', en:'Sead Kolasinac' },
+    { num:5, pos:'DF', en:'Amar Dedic' },
+    { num:6, pos:'DF', en:'Nihad Mujakic' },
+    { num:7, pos:'DF', en:'Nikola Katic' },
+    { num:8, pos:'DF', en:'Tarik Muharemovic' },
+    { num:9, pos:'DF', en:'Stjepan Radeljic' },
+    { num:10, pos:'DF', en:'Dennis Hadzikadunic' },
+    { num:11, pos:'DF', en:'Nidal Celik' },
+    { num:12, pos:'MF', en:'Amir Hadziahmetovic' },
+    { num:13, pos:'MF', en:'Ivan Sunjic' },
+    { num:14, pos:'MF', en:'Ivan Basic' },
+    { num:15, pos:'MF', en:'Dzenis Burnic' },
+    { num:16, pos:'MF', en:'Ermin Mahmic' },
+    { num:17, pos:'MF', en:'Benjamin Tahirovic' },
+    { num:18, pos:'MF', en:'Amar Memic' },
+    { num:19, pos:'MF', en:'Armin Gigovic' },
+    { num:20, pos:'MF', en:'Kerim Alajbegovic' },
+    { num:21, pos:'MF', en:'Esmir Bajraktarevic' },
+    { num:22, pos:'FW', en:'Ermedin Demirovic' },
+    { num:23, pos:'FW', en:'Jovo Lukic' },
+    { num:24, pos:'FW', en:'Samed Bazdar' },
+    { num:25, pos:'FW', en:'Haris Tabakovic' },
+    { num:26, pos:'FW', en:'Edin Dzeko' },
+  ]},
+  '摩洛哥': { flag:'🇲🇦', group:'C', coach:'瓦利德·雷格拉吉', players: [
+    { num:1, pos:'GK', en:'Yassine Bounou' },
+    { num:2, pos:'GK', en:'Munir El Kajoui' },
+    { num:3, pos:'GK', en:'Ahmed Reda Tagnaouti' },
+    { num:4, pos:'DF', en:'Noussair Mazraoui' },
+    { num:5, pos:'DF', en:'Anas Salah-Eddine' },
+    { num:6, pos:'DF', en:'Youssef Bellammari' },
+    { num:7, pos:'DF', en:'Achraf Hakimi' },
+    { num:8, pos:'DF', en:'Zakaria El Ouahdi' },
+    { num:9, pos:'DF', en:'Nayef Aguerd' },
+    { num:10, pos:'DF', en:'Chadi Riad' },
+    { num:11, pos:'DF', en:'Redouane Halhal' },
+    { num:12, pos:'DF', en:'Issa Diop' },
+    { num:13, pos:'MF', en:'Samir El Mourabet' },
+    { num:14, pos:'MF', en:'Ayoub Bouaddi' },
+    { num:15, pos:'MF', en:'Neil El Aynaoui' },
+    { num:16, pos:'MF', en:'Sofyan Amrabat' },
+    { num:17, pos:'MF', en:'Azzedine Ounahi' },
+    { num:18, pos:'MF', en:'Bilal El Khannouss' },
+    { num:19, pos:'MF', en:'Ismael Saibari' },
+    { num:20, pos:'FW', en:'Abdesamad Ezzalzouli' },
+    { num:21, pos:'FW', en:'Chemsdine Talbi' },
+    { num:22, pos:'FW', en:'Soufiane Rahimi' },
+    { num:23, pos:'FW', en:'Ayoub El Kaabi' },
+    { num:24, pos:'FW', en:'Brahim Diaz' },
+    { num:25, pos:'FW', en:'Yassine Gessim' },
+    { num:26, pos:'FW', en:'Ayoube Amaimouni-Echghouyab' },
+  ]},
+  '蘇格蘭': { flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿', group:'C', coach:'史蒂夫·克拉克', players: [
+    { num:1, pos:'GK', en:'Craig Gordon' },
+    { num:2, pos:'GK', en:'Angus Gunn' },
+    { num:3, pos:'GK', en:'Liam Kelly' },
+    { num:4, pos:'DF', en:'Grant Hanley' },
+    { num:5, pos:'DF', en:'Jack Hendry' },
+    { num:6, pos:'DF', en:'Aaron Hickey' },
+    { num:7, pos:'DF', en:'Dom Hyam' },
+    { num:8, pos:'DF', en:'Scott McKenna' },
+    { num:9, pos:'DF', en:'Nathan Patterson' },
+    { num:10, pos:'DF', en:'Anthony Ralston' },
+    { num:11, pos:'DF', en:'Andy Robertson' },
+    { num:12, pos:'DF', en:'John Souttar' },
+    { num:13, pos:'DF', en:'Kieran Tierney' },
+    { num:14, pos:'MF', en:'Ryan Christie' },
+    { num:15, pos:'MF', en:'Findlay Curtis' },
+    { num:16, pos:'MF', en:'Lewis Ferguson' },
+    { num:17, pos:'MF', en:'Tyler Fletcher' },
+    { num:18, pos:'MF', en:'Ben Gannon-Doak' },
+    { num:19, pos:'MF', en:'John McGinn' },
+    { num:20, pos:'MF', en:'Kenny McLean' },
+    { num:21, pos:'MF', en:'Scott McTominay' },
+    { num:22, pos:'FW', en:'Che Adams' },
+    { num:23, pos:'FW', en:'Lyndon Dykes' },
+    { num:24, pos:'FW', en:'George Hirst' },
+    { num:25, pos:'FW', en:'Lawrence Shankland' },
+    { num:26, pos:'FW', en:'Ross Stewart' },
+  ]},
+  '海地': { flag:'🇭🇹', group:'C', coach:'塞巴斯蒂安·米涅', players: [
+    { num:1, pos:'GK', en:'Josue Duverger' },
+    { num:2, pos:'GK', en:'Alexandre Pierre' },
+    { num:3, pos:'GK', en:'Johny Placide' },
+    { num:4, pos:'DF', en:'Ricardo Ade' },
+    { num:5, pos:'DF', en:'Carlens Arcus' },
+    { num:6, pos:'DF', en:'Hannes Delcroix' },
+    { num:7, pos:'DF', en:'Jean-Kevin Duverne' },
+    { num:8, pos:'DF', en:'Martin Experience' },
+    { num:9, pos:'DF', en:'Duke Lacroix' },
+    { num:10, pos:'DF', en:'Wilguens Paugain' },
+    { num:11, pos:'DF', en:'Keeto Thermoncy' },
+    { num:12, pos:'MF', en:'Carl Fred Sainte' },
+    { num:13, pos:'MF', en:'Jean-Ricner Bellegarde' },
+    { num:14, pos:'MF', en:'Leverton Pierre' },
+    { num:15, pos:'MF', en:'Danley Jean Jacques' },
+    { num:16, pos:'MF', en:'Woodensky Pierre' },
+    { num:17, pos:'MF', en:'Dominique Simon' },
+    { num:18, pos:'FW', en:'Josue Casimir' },
+    { num:19, pos:'FW', en:'Louicius Deedson' },
+    { num:20, pos:'FW', en:'Derrick Etienne Jr.' },
+    { num:21, pos:'FW', en:'Yassin Fortune' },
+    { num:22, pos:'FW', en:'Wilson Isidor' },
+    { num:23, pos:'FW', en:'Lenny Joseph' },
+    { num:24, pos:'FW', en:'Duckens Nazon' },
+    { num:25, pos:'FW', en:'Frantzdy Pierrot' },
+    { num:26, pos:'FW', en:'Ruben Providence' },
+  ]},
+  '美國': { flag:'🇺🇸', group:'D', coach:'毛里西奧·波切蒂諾', players: [
+    { num:1, pos:'GK', en:'Chris Brady' },
+    { num:2, pos:'GK', en:'Matt Freese' },
+    { num:3, pos:'GK', en:'Matt Turner' },
+    { num:4, pos:'DF', en:'Max Arfsten' },
+    { num:5, pos:'DF', en:'Sergino Dest' },
+    { num:6, pos:'DF', en:'Alex Freeman' },
+    { num:7, pos:'DF', en:'Mark McKenzie' },
+    { num:8, pos:'DF', en:'Tim Ream' },
+    { num:9, pos:'DF', en:'Chris Richards' },
+    { num:10, pos:'DF', en:'Antonee Robinson' },
+    { num:11, pos:'DF', en:'Miles Robinson' },
+    { num:12, pos:'DF', en:'Joe Scally' },
+    { num:13, pos:'DF', en:'Auston Trusty' },
+    { num:14, pos:'MF', en:'Tyler Adams' },
+    { num:15, pos:'MF', en:'Sebastian Berhalter' },
+    { num:16, pos:'MF', en:'Weston McKennie' },
+    { num:17, pos:'MF', en:'Cristian Roldan' },
+    { num:18, pos:'MF', en:'Brenden Aaronson' },
+    { num:19, pos:'MF', en:'Christian Pulisic' },
+    { num:20, pos:'MF', en:'Gio Reyna' },
+    { num:21, pos:'MF', en:'Malik Tillman' },
+    { num:22, pos:'MF', en:'Tim Weah' },
+    { num:23, pos:'MF', en:'Alejandro Zendejas' },
+    { num:24, pos:'FW', en:'Folarin Balogun' },
+    { num:25, pos:'FW', en:'Ricardo Pepi' },
+    { num:26, pos:'FW', en:'Haji Wright' },
+  ]},
+  '巴拉圭': { flag:'🇵🇾', group:'D', coach:'古斯塔沃·阿爾法羅', players: [
+    { num:1, pos:'GK', en:'Orlando Gill' },
+    { num:2, pos:'GK', en:'Roberto Fernandez' },
+    { num:3, pos:'GK', en:'Gaston Olveira' },
+    { num:4, pos:'DF', en:'Juan Caceres' },
+    { num:5, pos:'DF', en:'Gustavo Velazquez' },
+    { num:6, pos:'DF', en:'Gustavo Gomez' },
+    { num:7, pos:'DF', en:'Junior Alonso' },
+    { num:8, pos:'DF', en:'Jose Canale' },
+    { num:9, pos:'DF', en:'Omar Alderete' },
+    { num:10, pos:'DF', en:'Alexandro Maidana' },
+    { num:11, pos:'DF', en:'Fabian Balbuena' },
+    { num:12, pos:'MF', en:'Diego Gomez' },
+    { num:13, pos:'MF', en:'Mauricio Magalhaes' },
+    { num:14, pos:'MF', en:'Damian Bobadilla' },
+    { num:15, pos:'MF', en:'Braian Ojeda' },
+    { num:16, pos:'MF', en:'Andres Cubas' },
+    { num:17, pos:'MF', en:'Matias Galarza' },
+    { num:18, pos:'MF', en:'Alejandro Gamarra' },
+    { num:19, pos:'FW', en:'Gustavo Caballero' },
+    { num:20, pos:'FW', en:'Ramon Sosa' },
+    { num:21, pos:'FW', en:'Alex Arce' },
+    { num:22, pos:'FW', en:'Isidro Pitta' },
+    { num:23, pos:'FW', en:'Gabriel Avalos' },
+    { num:24, pos:'FW', en:'Miguel Almiron' },
+    { num:25, pos:'FW', en:'Julio Enciso' },
+    { num:26, pos:'FW', en:'Antonio Sanabria' },
+  ]},
+  '澳洲': { flag:'🇦🇺', group:'D', coach:'東尼·波波維奇', players: [
+    { num:1, pos:'GK', en:'Patrick Beach' },
+    { num:2, pos:'GK', en:'Paul Izzo' },
+    { num:3, pos:'GK', en:'Mathew Ryan' },
+    { num:4, pos:'DF', en:'Aziz Behich' },
+    { num:5, pos:'DF', en:'Jordan Bos' },
+    { num:6, pos:'DF', en:'Cameron Burgess' },
+    { num:7, pos:'DF', en:'Alessandro Circati' },
+    { num:8, pos:'DF', en:'Milos Degenek' },
+    { num:9, pos:'DF', en:'Jason Geria' },
+    { num:10, pos:'DF', en:'Lucas Herrington' },
+    { num:11, pos:'DF', en:'Jacob Italiano' },
+    { num:12, pos:'DF', en:'Harry Souttar' },
+    { num:13, pos:'DF', en:'Kai Trewin' },
+    { num:14, pos:'MF', en:'Cameron Devlin' },
+    { num:15, pos:'MF', en:'Ajdin Hrustic' },
+    { num:16, pos:'MF', en:'Jackson Irvine' },
+    { num:17, pos:'MF', en:'Connor Metcalfe' },
+    { num:18, pos:'MF', en:'Aiden O\'Neill' },
+    { num:19, pos:'MF', en:'Paul Okon-Engstler' },
+    { num:20, pos:'FW', en:'Nestory Irankunda' },
+    { num:21, pos:'FW', en:'Mathew Leckie' },
+    { num:22, pos:'FW', en:'Awer Mabil' },
+    { num:23, pos:'FW', en:'Mohamed Toure' },
+    { num:24, pos:'FW', en:'Nishan Velupillay' },
+    { num:25, pos:'FW', en:'Cristian Volpato' },
+    { num:26, pos:'FW', en:'Tete Yengi' },
+  ]},
+  '土耳其': { flag:'🇹🇷', group:'D', coach:'文森佐·蒙特拉', players: [
+    { num:1, pos:'GK', en:'Altay Bayindir' },
+    { num:2, pos:'GK', en:'Mert Gunok' },
+    { num:3, pos:'GK', en:'Ugurcan Cakir' },
+    { num:4, pos:'DF', en:'Abdulkerim Bardakci' },
+    { num:5, pos:'DF', en:'Caglar Soyuncu' },
+    { num:6, pos:'DF', en:'Eren Elmali' },
+    { num:7, pos:'DF', en:'Ferdi Kadioglu' },
+    { num:8, pos:'DF', en:'Merih Demiral' },
+    { num:9, pos:'DF', en:'Mert Muldur' },
+    { num:10, pos:'DF', en:'Ozan Kabak' },
+    { num:11, pos:'DF', en:'Samet Akaydin' },
+    { num:12, pos:'DF', en:'Zeki Celik' },
+    { num:13, pos:'MF', en:'Hakan Calhanoglu' },
+    { num:14, pos:'MF', en:'Ismail Yuksek' },
+    { num:15, pos:'MF', en:'Kaan Ayhan' },
+    { num:16, pos:'MF', en:'Orkun Kokcu' },
+    { num:17, pos:'MF', en:'Salih Ozcan' },
+    { num:18, pos:'FW', en:'Arda Guler' },
+    { num:19, pos:'FW', en:'Baris Alper Yilmaz' },
+    { num:20, pos:'FW', en:'Can Uzun' },
+    { num:21, pos:'FW', en:'Deniz Gul' },
+    { num:22, pos:'FW', en:'Irfan Can Kahveci' },
+    { num:23, pos:'FW', en:'Kenan Yildiz' },
+    { num:24, pos:'FW', en:'Kerem Akturkoglu' },
+    { num:25, pos:'FW', en:'Oguz Aydin' },
+    { num:26, pos:'FW', en:'Yunus Akgun' },
+  ]},
+  '厄瓜多': { flag:'🇪🇨', group:'E', coach:'塞巴斯蒂安·貝卡塞塞', players: [
+    { num:1, pos:'GK', en:'Hernan Galindez' },
+    { num:2, pos:'GK', en:'Moises Ramirez' },
+    { num:3, pos:'GK', en:'Gonzalo Valle' },
+    { num:4, pos:'DF', en:'Piero Hincapie' },
+    { num:5, pos:'DF', en:'Willian Pacho' },
+    { num:6, pos:'DF', en:'Pervis Estupinan' },
+    { num:7, pos:'DF', en:'Felix Torres' },
+    { num:8, pos:'DF', en:'Joel Ordonez' },
+    { num:9, pos:'DF', en:'Jackson Porozo' },
+    { num:10, pos:'DF', en:'Angelo Preciado' },
+    { num:11, pos:'DF', en:'Yaimar Medina' },
+    { num:12, pos:'MF', en:'Moises Caicedo' },
+    { num:13, pos:'MF', en:'Alan Franco' },
+    { num:14, pos:'MF', en:'Kendry Paez' },
+    { num:15, pos:'MF', en:'Gonzalo Plata' },
+    { num:16, pos:'MF', en:'Pedro Vite' },
+    { num:17, pos:'MF', en:'Jordy Alcivar' },
+    { num:18, pos:'MF', en:'Denil Castillo' },
+    { num:19, pos:'MF', en:'John Yeboah' },
+    { num:20, pos:'MF', en:'Nilson Angulo' },
+    { num:21, pos:'MF', en:'Alan Minda' },
+    { num:22, pos:'FW', en:'Enner Valencia' },
+    { num:23, pos:'FW', en:'Kevin Rodriguez' },
+    { num:24, pos:'FW', en:'Jordy Caicedo' },
+    { num:25, pos:'FW', en:'Anthony Valencia' },
+    { num:26, pos:'FW', en:'Jeremy Arevalo' },
+  ]},
+  '象牙海岸': { flag:'🇨🇮', group:'E', coach:'埃梅爾塞·法埃', players: [
+    { num:1, pos:'GK', en:'Yahia Fofana' },
+    { num:2, pos:'GK', en:'Mohamed Kone' },
+    { num:3, pos:'GK', en:'Alban Lafont' },
+    { num:4, pos:'DF', en:'Emmanuel Agbadou' },
+    { num:5, pos:'DF', en:'Christopher Operi' },
+    { num:6, pos:'DF', en:'Ousmane Diomande' },
+    { num:7, pos:'DF', en:'Guela Doue' },
+    { num:8, pos:'DF', en:'Ghislain Konan' },
+    { num:9, pos:'DF', en:'Odilon Kossounou' },
+    { num:10, pos:'DF', en:'Wilfried Singo' },
+    { num:11, pos:'DF', en:'Evan Ndicka' },
+    { num:12, pos:'MF', en:'Seko Fofana' },
+    { num:13, pos:'MF', en:'Parfait Guiagon' },
+    { num:14, pos:'MF', en:'Christ Inao Oulai' },
+    { num:15, pos:'MF', en:'Franck Kessie' },
+    { num:16, pos:'MF', en:'Ibrahim Sangare' },
+    { num:17, pos:'MF', en:'Jean Michael Seri' },
+    { num:18, pos:'FW', en:'Simon Adingra' },
+    { num:19, pos:'FW', en:'Ange-Yoan Bonny' },
+    { num:20, pos:'FW', en:'Amad Diallo' },
+    { num:21, pos:'FW', en:'Oumar Diakite' },
+    { num:22, pos:'FW', en:'Yan Diomande' },
+    { num:23, pos:'FW', en:'Evann Guessand' },
+    { num:24, pos:'FW', en:'Nicolas Pepe' },
+    { num:25, pos:'FW', en:'Bazoumana Toure' },
+    { num:26, pos:'FW', en:'Elye Wahi' },
+  ]},
+  '古拉索': { flag:'🇨🇼', group:'E', coach:'迪克·艾德沃卡特', players: [
+    { num:1, pos:'GK', en:'Tyrick Bodack' },
+    { num:2, pos:'GK', en:'Trevor Doornbusch' },
+    { num:3, pos:'GK', en:'Eloy Room' },
+    { num:4, pos:'DF', en:'Riechedly Bazoer' },
+    { num:5, pos:'DF', en:'Joshua Brenet' },
+    { num:6, pos:'DF', en:'Roshon van Eijma' },
+    { num:7, pos:'DF', en:'Sherel Floranus' },
+    { num:8, pos:'DF', en:'Deveron Fonville' },
+    { num:9, pos:'DF', en:'Jurien Gaari' },
+    { num:10, pos:'DF', en:'Armando Obispo' },
+    { num:11, pos:'DF', en:'Shurandy Sambo' },
+    { num:12, pos:'MF', en:'Juninho Bacuna' },
+    { num:13, pos:'MF', en:'Leandro Bacuna' },
+    { num:14, pos:'MF', en:'Livano Comenencia' },
+    { num:15, pos:'MF', en:'Kevin Felida' },
+    { num:16, pos:'MF', en:'Ar\'jany Martha' },
+    { num:17, pos:'MF', en:'Tyrese Noslin' },
+    { num:18, pos:'MF', en:'Godfried Roemeratoe' },
+    { num:19, pos:'FW', en:'Jeremy Antonisse' },
+    { num:20, pos:'FW', en:'Tahith Chong' },
+    { num:21, pos:'FW', en:'Kenji Gorre' },
+    { num:22, pos:'FW', en:'Sontje Hansen' },
+    { num:23, pos:'FW', en:'Gervane Kastaneer' },
+    { num:24, pos:'FW', en:'Brandley Kuwas' },
+    { num:25, pos:'FW', en:'Jurgen Locadia' },
+    { num:26, pos:'FW', en:'Jearl Margaritha' },
+  ]},
+  '荷蘭': { flag:'🇳🇱', group:'F', coach:'羅納德·科曼', players: [
+    { num:1, pos:'GK', en:'Mark Flekken' },
+    { num:2, pos:'GK', en:'Robin Roefs' },
+    { num:3, pos:'GK', en:'Bart Verbruggen' },
+    { num:4, pos:'DF', en:'Nathan Ake' },
+    { num:5, pos:'DF', en:'Virgil van Dijk' },
+    { num:6, pos:'DF', en:'Denzel Dumfries' },
+    { num:7, pos:'DF', en:'Jan Paul van Hecke' },
+    { num:8, pos:'DF', en:'Jurrien Timber' },
+    { num:9, pos:'DF', en:'Jorrel Hato' },
+    { num:10, pos:'DF', en:'Micky van de Ven' },
+    { num:11, pos:'MF', en:'Ryan Gravenberch' },
+    { num:12, pos:'MF', en:'Frenkie de Jong' },
+    { num:13, pos:'MF', en:'Teun Koopmeiners' },
+    { num:14, pos:'MF', en:'Tijjani Reijnders' },
+    { num:15, pos:'MF', en:'Marten de Roon' },
+    { num:16, pos:'MF', en:'Guus Til' },
+    { num:17, pos:'MF', en:'Quinten Timber' },
+    { num:18, pos:'MF', en:'Mats Wieffer' },
+    { num:19, pos:'FW', en:'Brian Brobbey' },
+    { num:20, pos:'FW', en:'Memphis Depay' },
+    { num:21, pos:'FW', en:'Cody Gakpo' },
+    { num:22, pos:'FW', en:'Noa Lang' },
+    { num:23, pos:'FW', en:'Donyell Malen' },
+    { num:24, pos:'FW', en:'Crysencio Summerville' },
+    { num:25, pos:'FW', en:'Wout Weghorst' },
+    { num:26, pos:'FW', en:'Justin Kluivert' },
+  ]},
+  '日本': { flag:'🇯🇵', group:'F', coach:'森保一', players: [
+    { num:1, pos:'GK', en:'Tomoki Hayakawa' },
+    { num:2, pos:'GK', en:'Keisuke Osako' },
+    { num:3, pos:'GK', en:'Zion Suzuki' },
+    { num:4, pos:'DF', en:'Ko Itakura' },
+    { num:5, pos:'DF', en:'Hiroki Ito' },
+    { num:6, pos:'DF', en:'Yuto Nagatomo' },
+    { num:7, pos:'DF', en:'Ayumu Seko' },
+    { num:8, pos:'DF', en:'Yukinari Sugawara' },
+    { num:9, pos:'DF', en:'Junnosuke Suzuki' },
+    { num:10, pos:'DF', en:'Shogo Taniguchi' },
+    { num:11, pos:'DF', en:'Takehiro Tomiyasu' },
+    { num:12, pos:'DF', en:'Tsuyoshi Watanabe' },
+    { num:13, pos:'MF', en:'Ritsu Doan' },
+    { num:14, pos:'MF', en:'Wataru Endo' },
+    { num:15, pos:'MF', en:'Junya Ito' },
+    { num:16, pos:'MF', en:'Daichi Kamada' },
+    { num:17, pos:'MF', en:'Takefusa Kubo' },
+    { num:18, pos:'MF', en:'Keito Nakamura' },
+    { num:19, pos:'MF', en:'Kaishu Sano' },
+    { num:20, pos:'MF', en:'Ao Tanaka' },
+    { num:21, pos:'FW', en:'Keisuke Goto' },
+    { num:22, pos:'FW', en:'Daizen Maeda' },
+    { num:23, pos:'FW', en:'Koki Ogawa' },
+    { num:24, pos:'FW', en:'Kento Shiogai' },
+    { num:25, pos:'FW', en:'Yuito Suzuki' },
+    { num:26, pos:'FW', en:'Ayase Ueda' },
+  ]},
+  '突尼西亞': { flag:'🇹🇳', group:'F', coach:'薩米·特拉貝爾西', players: [
+    { num:1, pos:'GK', en:'Sabri Ben Hessen' },
+    { num:2, pos:'GK', en:'Abdelmouhib Chamakh' },
+    { num:3, pos:'GK', en:'Aymen Dahman' },
+    { num:4, pos:'DF', en:'Ali Abdi' },
+    { num:5, pos:'DF', en:'Adem Arous' },
+    { num:6, pos:'DF', en:'Mohamed Amine Ben Hamida' },
+    { num:7, pos:'DF', en:'Dylan Bronn' },
+    { num:8, pos:'DF', en:'Raed Chikhaoui' },
+    { num:9, pos:'DF', en:'Moutaz Neffati' },
+    { num:10, pos:'DF', en:'Omar Rekik' },
+    { num:11, pos:'DF', en:'Montassar Talbi' },
+    { num:12, pos:'DF', en:'Yan Valery' },
+    { num:13, pos:'MF', en:'Mortadha Ben Ouanes' },
+    { num:14, pos:'MF', en:'Anis Ben Slimane' },
+    { num:15, pos:'MF', en:'Ismael Gharbi' },
+    { num:16, pos:'MF', en:'Rani Khedira' },
+    { num:17, pos:'MF', en:'Mohamed Hadj Mahmoud' },
+    { num:18, pos:'MF', en:'Hannibal Mejbri' },
+    { num:19, pos:'MF', en:'Ellyes Skhiri' },
+    { num:20, pos:'FW', en:'Elias Achouri' },
+    { num:21, pos:'FW', en:'Khalil Ayari' },
+    { num:22, pos:'FW', en:'Firas Chaouat' },
+    { num:23, pos:'FW', en:'Rayan Elloumi' },
+    { num:24, pos:'FW', en:'Hazem Mastouri' },
+    { num:25, pos:'FW', en:'Elias Saad' },
+    { num:26, pos:'FW', en:'Sebastian Tounekti' },
+  ]},
+  '瑞典': { flag:'🇸🇪', group:'F', coach:'格雷厄姆·波特', players: [
+    { num:1, pos:'GK', en:'Viktor Johansson' },
+    { num:2, pos:'GK', en:'Gustaf Lagerbielke' },
+    { num:3, pos:'GK', en:'Kristoffer Nordfeldt' },
+    { num:4, pos:'GK', en:'Jacob Zetterstrom' },
+    { num:5, pos:'DF', en:'Hjalmar Ekdal' },
+    { num:6, pos:'DF', en:'Gabriel Gudmundsson' },
+    { num:7, pos:'DF', en:'Isak Hien' },
+    { num:8, pos:'DF', en:'Victor Lindelof' },
+    { num:9, pos:'DF', en:'Eric Smith' },
+    { num:10, pos:'DF', en:'Carl Starfelt' },
+    { num:11, pos:'DF', en:'Daniel Svensson' },
+    { num:12, pos:'MF', en:'Yasin Ayari' },
+    { num:13, pos:'MF', en:'Lucas Bergvall' },
+    { num:14, pos:'MF', en:'Jesper Karlstrom' },
+    { num:15, pos:'MF', en:'Benjamin Nygren' },
+    { num:16, pos:'MF', en:'Ken Sema' },
+    { num:17, pos:'MF', en:'Elliot Stroud' },
+    { num:18, pos:'MF', en:'Mattias Svanberg' },
+    { num:19, pos:'MF', en:'Besfort Zeneli' },
+    { num:20, pos:'FW', en:'Taha Ali' },
+    { num:21, pos:'FW', en:'Alexander Bernhardsson' },
+    { num:22, pos:'FW', en:'Anthony Elanga' },
+    { num:23, pos:'FW', en:'Viktor Gyokeres' },
+    { num:24, pos:'FW', en:'Alexander Isak' },
+    { num:25, pos:'FW', en:'Gustaf Nilsson' },
+  ]},
+  '比利時': { flag:'🇧🇪', group:'G', coach:'魯迪·加西亞', players: [
+    { num:1, pos:'GK', en:'Thibaut Courtois' },
+    { num:2, pos:'GK', en:'Senne Lammens' },
+    { num:3, pos:'GK', en:'Mike Penders' },
+    { num:4, pos:'DF', en:'Timothy Castagne' },
+    { num:5, pos:'DF', en:'Zeno Debast' },
+    { num:6, pos:'DF', en:'Maxim De Cuyper' },
+    { num:7, pos:'DF', en:'Koni De Winter' },
+    { num:8, pos:'DF', en:'Brandon Mechele' },
+    { num:9, pos:'DF', en:'Thomas Meunier' },
+    { num:10, pos:'DF', en:'Nathan Ngoy' },
+    { num:11, pos:'DF', en:'Joaquin Seys' },
+    { num:12, pos:'DF', en:'Arthur Theate' },
+    { num:13, pos:'MF', en:'Kevin De Bruyne' },
+    { num:14, pos:'MF', en:'Amadou Onana' },
+    { num:15, pos:'MF', en:'Nicolas Raskin' },
+    { num:16, pos:'MF', en:'Youri Tielemans' },
+    { num:17, pos:'MF', en:'Hans Vanaken' },
+    { num:18, pos:'MF', en:'Axel Witsel' },
+    { num:19, pos:'FW', en:'Charles De Ketelaere' },
+    { num:20, pos:'FW', en:'Jeremy Doku' },
+    { num:21, pos:'FW', en:'Matias Fernandez-Pardo' },
+    { num:22, pos:'FW', en:'Romelu Lukaku' },
+    { num:23, pos:'FW', en:'Dodi Lukebakio' },
+    { num:24, pos:'FW', en:'Diego Moreira' },
+    { num:25, pos:'FW', en:'Alexis Saelemaekers' },
+    { num:26, pos:'FW', en:'Leandro Trossard' },
+  ]},
+  '伊朗': { flag:'🇮🇷', group:'G', coach:'阿米爾·加萊諾埃', players: [
+    { num:1, pos:'GK', en:'Alireza Beiranvand' },
+    { num:2, pos:'GK', en:'Seyed Hossein Hosseini' },
+    { num:3, pos:'GK', en:'Payam Niazmand' },
+    { num:4, pos:'DF', en:'Danial Eiri' },
+    { num:5, pos:'DF', en:'Ehsan Hajsafi' },
+    { num:6, pos:'DF', en:'Saleh Hardani' },
+    { num:7, pos:'DF', en:'Hossein Kanaani' },
+    { num:8, pos:'DF', en:'Shoja Khalilzadeh' },
+    { num:9, pos:'DF', en:'Milad Mohammadi' },
+    { num:10, pos:'DF', en:'Ali Nemati' },
+    { num:11, pos:'DF', en:'Ramin Rezaeian' },
+    { num:12, pos:'MF', en:'Rouzbeh Cheshmi' },
+    { num:13, pos:'MF', en:'Saeid Ezatolahi' },
+    { num:14, pos:'MF', en:'Mehdi Ghaedi' },
+    { num:15, pos:'MF', en:'Saman Ghoddos' },
+    { num:16, pos:'MF', en:'Mohammad Ghorbani' },
+    { num:17, pos:'MF', en:'Alireza Jahanbakhsh' },
+    { num:18, pos:'MF', en:'Mohammad Mohebi' },
+    { num:19, pos:'MF', en:'Amir Mohammad Razzaghinia' },
+    { num:20, pos:'MF', en:'Mehdi Torabi' },
+    { num:21, pos:'MF', en:'Aria Yousefi' },
+    { num:22, pos:'FW', en:'Ali Alipour' },
+    { num:23, pos:'FW', en:'Dennis Dargahi' },
+    { num:24, pos:'FW', en:'Amirhossein Hosseinzadeh' },
+    { num:25, pos:'FW', en:'Mehdi Taremi' },
+    { num:26, pos:'FW', en:'Shahriar Moghanlou' },
+  ]},
+  '埃及': { flag:'🇪🇬', group:'G', coach:'胡薩姆·哈桑', players: [
+    { num:1, pos:'GK', en:'Mohamed El Shenawy' },
+    { num:2, pos:'GK', en:'Mostafa Shobeir' },
+    { num:3, pos:'GK', en:'El Mahdy Soliman' },
+    { num:4, pos:'GK', en:'Mohamed Alaa' },
+    { num:5, pos:'DF', en:'Mohamed Abdelmonem' },
+    { num:6, pos:'DF', en:'Mohamed Hany' },
+    { num:7, pos:'DF', en:'Yasser Ibrahim' },
+    { num:8, pos:'DF', en:'Hossam Abdelmaguid' },
+    { num:9, pos:'DF', en:'Ahmed Fattouh' },
+    { num:10, pos:'DF', en:'Tarek Alaa' },
+    { num:11, pos:'DF', en:'Rami Rabia' },
+    { num:12, pos:'DF', en:'Karim Hafez' },
+    { num:13, pos:'MF', en:'Marwan Attia' },
+    { num:14, pos:'MF', en:'Ahmed Sayed Zizo' },
+    { num:15, pos:'MF', en:'Mahmoud Hassan Trezeguet' },
+    { num:16, pos:'MF', en:'Emam Ashour' },
+    { num:17, pos:'MF', en:'Mostafa Abdel Raouf' },
+    { num:18, pos:'MF', en:'Mohannad Lasheen' },
+    { num:19, pos:'MF', en:'Haitham Hassan' },
+    { num:20, pos:'MF', en:'Mahmoud Saber' },
+    { num:21, pos:'MF', en:'Ibrahim Adel' },
+    { num:22, pos:'MF', en:'Nabil Emad' },
+    { num:23, pos:'MF', en:'Hamdi Fathi' },
+    { num:24, pos:'FW', en:'Mohamed Salah' },
+    { num:25, pos:'FW', en:'Omar Marmoush' },
+    { num:26, pos:'FW', en:'Hamza Abdel Karim' },
+  ]},
+  '紐西蘭': { flag:'🇳🇿', group:'G', coach:'達倫·貝茲利', players: [
+    { num:1, pos:'GK', en:'Max Crocombe' },
+    { num:2, pos:'GK', en:'Alex Paulsen' },
+    { num:3, pos:'GK', en:'Michael Woud' },
+    { num:4, pos:'DF', en:'Tyler Bindon' },
+    { num:5, pos:'DF', en:'Michael Boxall' },
+    { num:6, pos:'DF', en:'Liberato Cacace' },
+    { num:7, pos:'DF', en:'Francis de Vries' },
+    { num:8, pos:'DF', en:'Callan Elliot' },
+    { num:9, pos:'DF', en:'Tim Payne' },
+    { num:10, pos:'DF', en:'Nando Pijnaker' },
+    { num:11, pos:'DF', en:'Tommy Smith' },
+    { num:12, pos:'DF', en:'Finn Surman' },
+    { num:13, pos:'MF', en:'Lachlan Bayliss' },
+    { num:14, pos:'MF', en:'Joe Bell' },
+    { num:15, pos:'MF', en:'Matt Garbett' },
+    { num:16, pos:'MF', en:'Eli Just' },
+    { num:17, pos:'MF', en:'Callum McCowatt' },
+    { num:18, pos:'MF', en:'Ben Old' },
+    { num:19, pos:'MF', en:'Alex Rufer' },
+    { num:20, pos:'MF', en:'Marko Stamenic' },
+    { num:21, pos:'MF', en:'Sarpreet Singh' },
+    { num:22, pos:'MF', en:'Ryan Thomas' },
+    { num:23, pos:'FW', en:'Kosta Barbarouses' },
+    { num:24, pos:'FW', en:'Jesse Randall' },
+    { num:25, pos:'FW', en:'Ben Waine' },
+    { num:26, pos:'FW', en:'Chris Wood' },
+  ]},
+  '烏拉圭': { flag:'🇺🇾', group:'H', coach:'馬塞洛·貝爾薩', players: [
+    { num:1, pos:'GK', en:'Sergio Rochet' },
+    { num:2, pos:'GK', en:'Fernando Muslera' },
+    { num:3, pos:'GK', en:'Santiago Mele' },
+    { num:4, pos:'DF', en:'Guillermo Varela' },
+    { num:5, pos:'DF', en:'Ronald Araujo' },
+    { num:6, pos:'DF', en:'Jose Maria Gimenez' },
+    { num:7, pos:'DF', en:'Santiago Bueno' },
+    { num:8, pos:'DF', en:'Sebastian Caceres' },
+    { num:9, pos:'DF', en:'Mathias Olivera' },
+    { num:10, pos:'DF', en:'Joaquin Piquerez' },
+    { num:11, pos:'DF', en:'Matias Vina' },
+    { num:12, pos:'MF', en:'Maximiliano Araujo' },
+    { num:13, pos:'MF', en:'Giorgian de Arrascaeta' },
+    { num:14, pos:'MF', en:'Rodrigo Bentancur' },
+    { num:15, pos:'MF', en:'Agustin Canobbio' },
+    { num:16, pos:'MF', en:'Nicolas de la Cruz' },
+    { num:17, pos:'MF', en:'Emiliano Martinez' },
+    { num:18, pos:'MF', en:'Facundo Pellistri' },
+    { num:19, pos:'MF', en:'Brian Rodriguez' },
+    { num:20, pos:'MF', en:'Juan Manuel Sanabria' },
+    { num:21, pos:'MF', en:'Manuel Ugarte' },
+    { num:22, pos:'MF', en:'Federico Valverde' },
+    { num:23, pos:'MF', en:'Rodrigo Zalazar' },
+    { num:24, pos:'FW', en:'Rodrigo Aguirre' },
+    { num:25, pos:'FW', en:'Federico Vinas' },
+    { num:26, pos:'FW', en:'Darwin Nunez' },
+  ]},
+  '沙烏地阿拉伯': { flag:'🇸🇦', group:'H', coach:'埃爾韋·雷納爾', players: [
+    { num:1, pos:'GK', en:'Nawaf Al Aqidi' },
+    { num:2, pos:'GK', en:'Mohamed Al Owais' },
+    { num:3, pos:'GK', en:'Ahmed Alkassar' },
+    { num:4, pos:'DF', en:'Saud Abdulhamid' },
+    { num:5, pos:'DF', en:'Jehad Thakri' },
+    { num:6, pos:'DF', en:'Abdulelah Al Amri' },
+    { num:7, pos:'DF', en:'Hassan Tambakti' },
+    { num:8, pos:'DF', en:'Ali Lajami' },
+    { num:9, pos:'DF', en:'Hassan Kadesh' },
+    { num:10, pos:'DF', en:'Moteb Al Harbi' },
+    { num:11, pos:'DF', en:'Nawaf Boushal' },
+    { num:12, pos:'DF', en:'Ali Majrashi' },
+    { num:13, pos:'DF', en:'Mohammed Abu Alshamat' },
+    { num:14, pos:'MF', en:'Ziyad Al Johani' },
+    { num:15, pos:'MF', en:'Nasser Al Dawsari' },
+    { num:16, pos:'MF', en:'Mohamed Kanno' },
+    { num:17, pos:'MF', en:'Abdullah Al Khaibari' },
+    { num:18, pos:'MF', en:'Alaa Al Hejji' },
+    { num:19, pos:'MF', en:'Musab Al Juwayr' },
+    { num:20, pos:'MF', en:'Sultan Mandash' },
+    { num:21, pos:'MF', en:'Ayman Yahya' },
+    { num:22, pos:'MF', en:'Khalid Al Ghannam' },
+    { num:23, pos:'FW', en:'Salem Al Dawsari' },
+    { num:24, pos:'FW', en:'Abdullah Al Hamdan' },
+    { num:25, pos:'FW', en:'Feras Al Brikan' },
+    { num:26, pos:'FW', en:'Saleh Al Shehri' },
+  ]},
+  '維德角': { flag:'🇨🇻', group:'H', coach:'布比斯塔', players: [
+    { num:1, pos:'GK', en:'CJ dos Santos' },
+    { num:2, pos:'GK', en:'Marcio Rosa' },
+    { num:3, pos:'GK', en:'Vozinha' },
+    { num:4, pos:'DF', en:'Sidny Cabral' },
+    { num:5, pos:'DF', en:'Diney Borges' },
+    { num:6, pos:'DF', en:'Logan Costa' },
+    { num:7, pos:'DF', en:'Roberto Lopes' },
+    { num:8, pos:'DF', en:'Steven Moreira' },
+    { num:9, pos:'DF', en:'Wagner Pina' },
+    { num:10, pos:'DF', en:'Kelvin Pires' },
+    { num:11, pos:'DF', en:'Joao Paulo Fernandes' },
+    { num:12, pos:'DF', en:'Ianique Tavares' },
+    { num:13, pos:'MF', en:'Telmo Arcanjo' },
+    { num:14, pos:'MF', en:'Deroy Duarte' },
+    { num:15, pos:'MF', en:'Laros Duarte' },
+    { num:16, pos:'MF', en:'Jamiro Monteiro' },
+    { num:17, pos:'MF', en:'Kevin Pina' },
+    { num:18, pos:'MF', en:'Yannick Semedo' },
+    { num:19, pos:'FW', en:'Gilson Benchimol' },
+    { num:20, pos:'FW', en:'Jovane Cabral' },
+    { num:21, pos:'FW', en:'Dailon Livramento' },
+    { num:22, pos:'FW', en:'Ryan Mendes' },
+    { num:23, pos:'FW', en:'Nuno da Costa' },
+    { num:24, pos:'FW', en:'Garry Rodrigues' },
+    { num:25, pos:'FW', en:'Willy Semedo' },
+    { num:26, pos:'FW', en:'Helio Varela' },
+  ]},
+  '塞內加爾': { flag:'🇸🇳', group:'I', coach:'帕佩·蒂奧', players: [
+    { num:1, pos:'GK', en:'Edouard Mendy' },
+    { num:2, pos:'GK', en:'Mory Diaw' },
+    { num:3, pos:'GK', en:'Yehvann Diouf' },
+    { num:4, pos:'DF', en:'Krepin Diatta' },
+    { num:5, pos:'DF', en:'Antoine Mendy' },
+    { num:6, pos:'DF', en:'Kalidou Koulibaly' },
+    { num:7, pos:'DF', en:'El Hadji Malick Diouf' },
+    { num:8, pos:'DF', en:'Mamadou Sarr' },
+    { num:9, pos:'DF', en:'Moussa Niakhate' },
+    { num:10, pos:'DF', en:'Abdoulaye Seck' },
+    { num:11, pos:'DF', en:'Ismail Jakobs' },
+    { num:12, pos:'MF', en:'Idrissa Gana Gueye' },
+    { num:13, pos:'MF', en:'Pape Gueye' },
+    { num:14, pos:'MF', en:'Lamine Camara' },
+    { num:15, pos:'MF', en:'Habib Diarra' },
+    { num:16, pos:'MF', en:'Pathe Ciss' },
+    { num:17, pos:'MF', en:'Pape Matar Sarr' },
+    { num:18, pos:'MF', en:'Bara Sapoko Ndiaye' },
+    { num:19, pos:'FW', en:'Sadio Mane' },
+    { num:20, pos:'FW', en:'Ismaila Sarr' },
+    { num:21, pos:'FW', en:'Iliman Ndiaye' },
+    { num:22, pos:'FW', en:'Assane Diao' },
+    { num:23, pos:'FW', en:'Ibrahim Mbaye' },
+    { num:24, pos:'FW', en:'Nicolas Jackson' },
+    { num:25, pos:'FW', en:'Bamba Dieng' },
+    { num:26, pos:'FW', en:'Cherif Ndiaye' },
+  ]},
+  '挪威': { flag:'🇳🇴', group:'I', coach:'斯托勒·索爾巴肯', players: [
+    { num:1, pos:'GK', en:'Orjan Haskjold Nyland' },
+    { num:2, pos:'GK', en:'Egil Selvik' },
+    { num:3, pos:'GK', en:'Sander Tangvik' },
+    { num:4, pos:'DF', en:'Kristoffer Vassbakk Ajer' },
+    { num:5, pos:'DF', en:'Fredrik Bjorkan' },
+    { num:6, pos:'DF', en:'Henrik Falchener' },
+    { num:7, pos:'DF', en:'Sondre Langas' },
+    { num:8, pos:'DF', en:'Torbjorn Heggem' },
+    { num:9, pos:'DF', en:'Marcus Holmgren Pedersen' },
+    { num:10, pos:'DF', en:'Julian Ryerson' },
+    { num:11, pos:'DF', en:'David Moller Wolfe' },
+    { num:12, pos:'DF', en:'Leo Ostigard' },
+    { num:13, pos:'MF', en:'Thelonious Aasgaard' },
+    { num:14, pos:'MF', en:'Fredrik Aursnes' },
+    { num:15, pos:'MF', en:'Patrick Berg' },
+    { num:16, pos:'MF', en:'Sander Berge' },
+    { num:17, pos:'MF', en:'Oscar Bobb' },
+    { num:18, pos:'MF', en:'Jens Petter Hauge' },
+    { num:19, pos:'MF', en:'Antonio Nusa' },
+    { num:20, pos:'MF', en:'Andreas Schjelderup' },
+    { num:21, pos:'MF', en:'Morten Thorsby' },
+    { num:22, pos:'MF', en:'Kristian Thorstvedt' },
+    { num:23, pos:'MF', en:'Martin Odegaard' },
+    { num:24, pos:'FW', en:'Erling Haaland' },
+    { num:25, pos:'FW', en:'Alexander Sorloth' },
+    { num:26, pos:'FW', en:'Jorgen Strand Larsen' },
+  ]},
+  '伊拉克': { flag:'🇮🇶', group:'I', coach:'格雷厄姆·阿諾德', players: [
+    { num:1, pos:'GK', en:'Fahad Talib' },
+    { num:2, pos:'GK', en:'Jalal Hassan' },
+    { num:3, pos:'GK', en:'Ahmed Basil' },
+    { num:4, pos:'DF', en:'Hussein Ali' },
+    { num:5, pos:'DF', en:'Manaf Younis' },
+    { num:6, pos:'DF', en:'Zaid Tahseen' },
+    { num:7, pos:'DF', en:'Rebin Sulaka' },
+    { num:8, pos:'DF', en:'Akam Hashem' },
+    { num:9, pos:'DF', en:'Merchas Doski' },
+    { num:10, pos:'DF', en:'Ahmed Yahya' },
+    { num:11, pos:'DF', en:'Zaid Ismail' },
+    { num:12, pos:'DF', en:'Frans Putros' },
+    { num:13, pos:'DF', en:'Mustafa Saadoon' },
+    { num:14, pos:'MF', en:'Amir Al Ammari' },
+    { num:15, pos:'MF', en:'Kevin Yakob' },
+    { num:16, pos:'MF', en:'Zidane Iqbal' },
+    { num:17, pos:'MF', en:'Aimar Sher' },
+    { num:18, pos:'MF', en:'Ibrahim Bayesh' },
+    { num:19, pos:'MF', en:'Ahmed Qasim' },
+    { num:20, pos:'MF', en:'Youssef Amyn' },
+    { num:21, pos:'MF', en:'Marko Farji' },
+    { num:22, pos:'FW', en:'Ali Jassim' },
+    { num:23, pos:'FW', en:'Ali Al Hamadi' },
+    { num:24, pos:'FW', en:'Ali Yousef' },
+    { num:25, pos:'FW', en:'Aymen Hussein' },
+    { num:26, pos:'FW', en:'Mohanad Ali' },
+  ]},
+  '奧地利': { flag:'🇦🇹', group:'J', coach:'拉爾夫·朗尼克', players: [
+    { num:1, pos:'GK', en:'Patrick Pentz' },
+    { num:2, pos:'GK', en:'Alexander Schlager' },
+    { num:3, pos:'GK', en:'Florian Wiegele' },
+    { num:4, pos:'DF', en:'David Affengruber' },
+    { num:5, pos:'DF', en:'David Alaba' },
+    { num:6, pos:'DF', en:'Kevin Danso' },
+    { num:7, pos:'DF', en:'Marco Friedl' },
+    { num:8, pos:'DF', en:'Philipp Lienhart' },
+    { num:9, pos:'DF', en:'Phillipp Mwene' },
+    { num:10, pos:'DF', en:'Stefan Posch' },
+    { num:11, pos:'DF', en:'Alexander Prass' },
+    { num:12, pos:'DF', en:'Michael Svoboda' },
+    { num:13, pos:'MF', en:'Christoph Baumgartner' },
+    { num:14, pos:'MF', en:'Carney Chukwuemeka' },
+    { num:15, pos:'MF', en:'Florian Grillitsch' },
+    { num:16, pos:'MF', en:'Konrad Laimer' },
+    { num:17, pos:'MF', en:'Marcel Sabitzer' },
+    { num:18, pos:'MF', en:'Xaver Schlager' },
+    { num:19, pos:'MF', en:'Romano Schmid' },
+    { num:20, pos:'MF', en:'Alessandro Schopf' },
+    { num:21, pos:'MF', en:'Nicolas Seiwald' },
+    { num:22, pos:'MF', en:'Paul Wanner' },
+    { num:23, pos:'MF', en:'Patrick Wimmer' },
+    { num:24, pos:'FW', en:'Marko Arnautovic' },
+    { num:25, pos:'FW', en:'Michael Gregoritsch' },
+    { num:26, pos:'FW', en:'Sasa Kalajdzic' },
+  ]},
+  '阿爾及利亞': { flag:'🇩🇿', group:'J', coach:'弗拉迪米爾·佩特科維奇', players: [
+    { num:1, pos:'GK', en:'Oussama Benbot' },
+    { num:2, pos:'GK', en:'Melvin Masstil' },
+    { num:3, pos:'GK', en:'Luca Zidane' },
+    { num:4, pos:'DF', en:'Achraf Abada' },
+    { num:5, pos:'DF', en:'Rayan Ait Nouri' },
+    { num:6, pos:'DF', en:'Zinedine Belaid' },
+    { num:7, pos:'DF', en:'Rafik Belghali' },
+    { num:8, pos:'DF', en:'Ramy Bensebaini' },
+    { num:9, pos:'DF', en:'Samir Chergui' },
+    { num:10, pos:'DF', en:'Jaouen Hadjam' },
+    { num:11, pos:'DF', en:'Aissa Mandi' },
+    { num:12, pos:'DF', en:'Mohamed Amine Tougai' },
+    { num:13, pos:'MF', en:'Houssem Aouar' },
+    { num:14, pos:'MF', en:'Nabil Bentaleb' },
+    { num:15, pos:'MF', en:'Hicham Boudaoui' },
+    { num:16, pos:'MF', en:'Fares Chaibi' },
+    { num:17, pos:'MF', en:'Ibrahim Maza' },
+    { num:18, pos:'MF', en:'Yassine Titraoui' },
+    { num:19, pos:'MF', en:'Ramiz Zerrouki' },
+    { num:20, pos:'FW', en:'Mohamed Amine Amoura' },
+    { num:21, pos:'FW', en:'Nadir Benbouali' },
+    { num:22, pos:'FW', en:'Adil Boulbina' },
+    { num:23, pos:'FW', en:'Fares Ghedjemis' },
+    { num:24, pos:'FW', en:'Amine Gouiri' },
+    { num:25, pos:'FW', en:'Riyad Mahrez' },
+    { num:26, pos:'FW', en:'Anis Hadj Moussa' },
+  ]},
+  '約旦': { flag:'🇯🇴', group:'J', coach:'賈馬爾·塞拉米', players: [
+    { num:1, pos:'GK', en:'Yazid Abulaila' },
+    { num:2, pos:'GK', en:'Noor Bani Attiah' },
+    { num:3, pos:'GK', en:'Abdallah Al Fakhouri' },
+    { num:4, pos:'DF', en:'Mohammad Abu Hashish' },
+    { num:5, pos:'DF', en:'Abdullah Nasib' },
+    { num:6, pos:'DF', en:'Hussam Abu Dhahab' },
+    { num:7, pos:'DF', en:'Yazan Al Arab' },
+    { num:8, pos:'DF', en:'Mohammad Abu Alnadi' },
+    { num:9, pos:'DF', en:'Salem Obaid' },
+    { num:10, pos:'DF', en:'Saed Al Rosan' },
+    { num:11, pos:'DF', en:'Ehsan Haddad' },
+    { num:12, pos:'DF', en:'Anas Badawi' },
+    { num:13, pos:'MF', en:'Amer Jamous' },
+    { num:14, pos:'MF', en:'Noor Al Rawabdeh' },
+    { num:15, pos:'MF', en:'Rajaei Ayed' },
+    { num:16, pos:'MF', en:'Ibrahim Sadeh' },
+    { num:17, pos:'MF', en:'Mohannad Abu Taha' },
+    { num:18, pos:'MF', en:'Nizar Al Rashdan' },
+    { num:19, pos:'MF', en:'Mohammad Al Dawoud' },
+    { num:20, pos:'MF', en:'Mahmoud Mardahi' },
+    { num:21, pos:'FW', en:'Mohammad Abu Zraiq' },
+    { num:22, pos:'FW', en:'Ali Olwan' },
+    { num:23, pos:'FW', en:'Mousa Al Tamari' },
+    { num:24, pos:'FW', en:'Odeh Fakhoury' },
+    { num:25, pos:'FW', en:'Ibrahim Sabra' },
+    { num:26, pos:'FW', en:'Ali Azaizeh' },
+  ]},
+  '葡萄牙': { flag:'🇵🇹', group:'K', coach:'羅伯托·馬丁內斯', players: [
+    { num:1, pos:'GK', en:'Diogo Costa' },
+    { num:2, pos:'GK', en:'Jose Sa' },
+    { num:3, pos:'GK', en:'Rui Silva' },
+    { num:4, pos:'DF', en:'Tomas Araujo' },
+    { num:5, pos:'DF', en:'Joao Cancelo' },
+    { num:6, pos:'DF', en:'Diogo Dalot' },
+    { num:7, pos:'DF', en:'Ruben Dias' },
+    { num:8, pos:'DF', en:'Goncalo Inacio' },
+    { num:9, pos:'DF', en:'Nuno Mendes' },
+    { num:10, pos:'DF', en:'Matheus Nunes' },
+    { num:11, pos:'DF', en:'Nelson Semedo' },
+    { num:12, pos:'DF', en:'Renato Veiga' },
+    { num:13, pos:'MF', en:'Samuel Costa' },
+    { num:14, pos:'MF', en:'Bruno Fernandes' },
+    { num:15, pos:'MF', en:'Joao Neves' },
+    { num:16, pos:'MF', en:'Ruben Neves' },
+    { num:17, pos:'MF', en:'Bernardo Silva' },
+    { num:18, pos:'MF', en:'Vitinha' },
+    { num:19, pos:'FW', en:'Francisco Conceicao' },
+    { num:20, pos:'FW', en:'Joao Felix' },
+    { num:21, pos:'FW', en:'Goncalo Guedes' },
+    { num:22, pos:'FW', en:'Rafael Leao' },
+    { num:23, pos:'FW', en:'Pedro Neto' },
+    { num:24, pos:'FW', en:'Goncalo Ramos' },
+    { num:25, pos:'FW', en:'Cristiano Ronaldo' },
+    { num:26, pos:'FW', en:'Francisco Trincao' },
+  ]},
+  '哥倫比亞': { flag:'🇨🇴', group:'K', coach:'內斯托爾·洛倫索', players: [
+    { num:1, pos:'GK', en:'Camilo Vargas' },
+    { num:2, pos:'GK', en:'Alvaro Montero' },
+    { num:3, pos:'GK', en:'David Ospina' },
+    { num:4, pos:'DF', en:'Davinson Sanchez' },
+    { num:5, pos:'DF', en:'Jhon Lucumi' },
+    { num:6, pos:'DF', en:'Yerry Mina' },
+    { num:7, pos:'DF', en:'Willer Ditta' },
+    { num:8, pos:'DF', en:'Daniel Munoz' },
+    { num:9, pos:'DF', en:'Santiago Arias' },
+    { num:10, pos:'DF', en:'Johan Mojica' },
+    { num:11, pos:'DF', en:'Deiver Machado' },
+    { num:12, pos:'MF', en:'Richard Rios' },
+    { num:13, pos:'MF', en:'Jefferson Lerma' },
+    { num:14, pos:'MF', en:'Kevin Castano' },
+    { num:15, pos:'MF', en:'Juan Camilo Portilla' },
+    { num:16, pos:'MF', en:'Gustavo Puerta' },
+    { num:17, pos:'MF', en:'Jhon Arias' },
+    { num:18, pos:'MF', en:'Jorge Carrascal' },
+    { num:19, pos:'MF', en:'Juan Fernando Quintero' },
+    { num:20, pos:'MF', en:'James Rodriguez' },
+    { num:21, pos:'MF', en:'Jaminton Campaz' },
+    { num:22, pos:'FW', en:'Juan Camilo Hernandez' },
+    { num:23, pos:'FW', en:'Luis Diaz' },
+    { num:24, pos:'FW', en:'Luis Suarez' },
+    { num:25, pos:'FW', en:'Carlos Gomez' },
+    { num:26, pos:'FW', en:'Jhon Cordoba' },
+  ]},
+  '烏茲別克': { flag:'🇺🇿', group:'K', coach:'法比奧·卡納瓦羅', players: [
+    { num:1, pos:'GK', en:'Botirali Ergashev' },
+    { num:2, pos:'GK', en:'Abduvohid Nematov' },
+    { num:3, pos:'GK', en:'Utkir Yusupov' },
+    { num:4, pos:'DF', en:'Abdukodir Khusanov' },
+    { num:5, pos:'DF', en:'Khojiakbar Alijonov' },
+    { num:6, pos:'DF', en:'Rustamjon Ashurmatov' },
+    { num:7, pos:'DF', en:'Farrukh Sayfiev' },
+    { num:8, pos:'DF', en:'Sherzod Nasrullaev' },
+    { num:9, pos:'DF', en:'Umarbek Eshmuradov' },
+    { num:10, pos:'DF', en:'Avazbek Ulmasaliev' },
+    { num:11, pos:'DF', en:'Jakhongir Urozov' },
+    { num:12, pos:'DF', en:'Bekhruz Karimov' },
+    { num:13, pos:'DF', en:'Abdulla Abdullaev' },
+    { num:14, pos:'MF', en:'Akmal Mozgovoy' },
+    { num:15, pos:'MF', en:'Otabek Shukurov' },
+    { num:16, pos:'MF', en:'Jamshid Iskanderov' },
+    { num:17, pos:'MF', en:'Odiljon Hamrobekov' },
+    { num:18, pos:'MF', en:'Jaloliddin Masharipov' },
+    { num:19, pos:'MF', en:'Azizbek Ganiev' },
+    { num:20, pos:'MF', en:'Sherzod Esanov' },
+    { num:21, pos:'MF', en:'Abbosbek Fayzullaev' },
+    { num:22, pos:'FW', en:'Azizbek Amonov' },
+    { num:23, pos:'FW', en:'Eldor Shomurodov' },
+    { num:24, pos:'FW', en:'Igor Sergeev' },
+    { num:25, pos:'FW', en:'Oston Urunov' },
+    { num:26, pos:'FW', en:'Dostonbek Hamdamov' },
+  ]},
+  '剛果民主共和國': { flag:'🇨🇩', group:'K', coach:'塞巴斯蒂安·德薩布雷', players: [
+    { num:1, pos:'GK', en:'Matthieu Epolo' },
+    { num:2, pos:'GK', en:'Timothy Fayulu' },
+    { num:3, pos:'GK', en:'Lionel Mpasi' },
+    { num:4, pos:'DF', en:'Dylan Batubinsika' },
+    { num:5, pos:'DF', en:'Gedeon Kalulu' },
+    { num:6, pos:'DF', en:'Steve Kapuadi' },
+    { num:7, pos:'DF', en:'Joris Kayembe' },
+    { num:8, pos:'DF', en:'Arthur Masuaku' },
+    { num:9, pos:'DF', en:'Chancel Mbemba' },
+    { num:10, pos:'DF', en:'Axel Tuanzebe' },
+    { num:11, pos:'DF', en:'Aaron Wan-Bissaka' },
+    { num:12, pos:'MF', en:'Brian Cipenga' },
+    { num:13, pos:'MF', en:'Meshack Elia' },
+    { num:14, pos:'MF', en:'Gael Kakuta' },
+    { num:15, pos:'MF', en:'Edo Kayembe' },
+    { num:16, pos:'MF', en:'Nathanael Mbuku' },
+    { num:17, pos:'MF', en:'Samuel Moutoussamy' },
+    { num:18, pos:'MF', en:'Ngal\'ayel Mukau' },
+    { num:19, pos:'MF', en:'Charles Pickel' },
+    { num:20, pos:'MF', en:'Noah Sadiki' },
+    { num:21, pos:'MF', en:'Aaron Tshibola' },
+    { num:22, pos:'FW', en:'Cedric Bakambu' },
+    { num:23, pos:'FW', en:'Simon Banza' },
+    { num:24, pos:'FW', en:'Fiston Mayele' },
+    { num:25, pos:'FW', en:'Yoane Wissa' },
+    { num:26, pos:'FW', en:'Theo Bongonda' },
+  ]},
+  '克羅埃西亞': { flag:'🇭🇷', group:'L', coach:'茲拉特科·達利奇', players: [
+    { num:1, pos:'GK', en:'Dominik Livakovic' },
+    { num:2, pos:'GK', en:'Dominik Kotarski' },
+    { num:3, pos:'GK', en:'Ivor Pandur' },
+    { num:4, pos:'DF', en:'Josko Gvardiol' },
+    { num:5, pos:'DF', en:'Duje Caleta-Car' },
+    { num:6, pos:'DF', en:'Josip Sutalo' },
+    { num:7, pos:'DF', en:'Josip Stanisic' },
+    { num:8, pos:'DF', en:'Marin Pongracic' },
+    { num:9, pos:'DF', en:'Martin Erlic' },
+    { num:10, pos:'DF', en:'Luka Vuskovic' },
+    { num:11, pos:'MF', en:'Luka Modric' },
+    { num:12, pos:'MF', en:'Mateo Kovacic' },
+    { num:13, pos:'MF', en:'Mario Pasalic' },
+    { num:14, pos:'MF', en:'Nikola Vlasic' },
+    { num:15, pos:'MF', en:'Luka Sucic' },
+    { num:16, pos:'MF', en:'Martin Baturina' },
+    { num:17, pos:'MF', en:'Kristijan Jakic' },
+    { num:18, pos:'MF', en:'Petar Sucic' },
+    { num:19, pos:'MF', en:'Nikola Moro' },
+    { num:20, pos:'MF', en:'Toni Fruk' },
+    { num:21, pos:'FW', en:'Ivan Perisic' },
+    { num:22, pos:'FW', en:'Andrej Kramaric' },
+    { num:23, pos:'FW', en:'Ante Budimir' },
+    { num:24, pos:'FW', en:'Marco Pasalic' },
+    { num:25, pos:'FW', en:'Petar Musa' },
+    { num:26, pos:'FW', en:'Igor Matanovic' },
+  ]},
+  '巴拿馬': { flag:'🇵🇦', group:'L', coach:'湯瑪斯·克里斯蒂安森', players: [
+    { num:1, pos:'GK', en:'Orlando Mosquera' },
+    { num:2, pos:'GK', en:'Luis Mejia' },
+    { num:3, pos:'GK', en:'Cesar Samudio' },
+    { num:4, pos:'DF', en:'Cesar Blackman' },
+    { num:5, pos:'DF', en:'Jorge Gutierrez' },
+    { num:6, pos:'DF', en:'Amir Murillo' },
+    { num:7, pos:'DF', en:'Fidel Escobar' },
+    { num:8, pos:'DF', en:'Andres Andrade' },
+    { num:9, pos:'DF', en:'Edgardo Farina' },
+    { num:10, pos:'DF', en:'Jose Cordoba' },
+    { num:11, pos:'DF', en:'Eric Davis' },
+    { num:12, pos:'DF', en:'Jiovany Ramos' },
+    { num:13, pos:'DF', en:'Roderick Miller' },
+    { num:14, pos:'MF', en:'Anibal Godoy' },
+    { num:15, pos:'MF', en:'Adalberto Carrasquilla' },
+    { num:16, pos:'MF', en:'Carlos Harvey' },
+    { num:17, pos:'MF', en:'Cristian Martinez' },
+    { num:18, pos:'MF', en:'Jose Luis Rodriguez' },
+    { num:19, pos:'MF', en:'Cesar Yanis' },
+    { num:20, pos:'MF', en:'Yoel Barcenas' },
+    { num:21, pos:'MF', en:'Alberto Quintero' },
+    { num:22, pos:'MF', en:'Azarias Londono' },
+    { num:23, pos:'FW', en:'Ismael Diaz' },
+    { num:24, pos:'FW', en:'Cecilio Waterman' },
+    { num:25, pos:'FW', en:'Jose Fajardo' },
+    { num:26, pos:'FW', en:'Tomas Rodriguez' },
+  ]},
+  '迦納': { flag:'🇬🇭', group:'L', coach:'奧托·阿多', players: [
+    { num:1, pos:'GK', en:'Joseph Anang' },
+    { num:2, pos:'GK', en:'Benjamin Asare' },
+    { num:3, pos:'GK', en:'Lawrence Ati-Zigi' },
+    { num:4, pos:'DF', en:'Jonas Adjetey' },
+    { num:5, pos:'DF', en:'Derrick Luckassen' },
+    { num:6, pos:'DF', en:'Gideon Mensah' },
+    { num:7, pos:'DF', en:'Abdul Mumin' },
+    { num:8, pos:'DF', en:'Jerome Opoku' },
+    { num:9, pos:'DF', en:'Kojo Oppong Preprah' },
+    { num:10, pos:'DF', en:'Baba Abdul Rahman' },
+    { num:11, pos:'DF', en:'Alidu Seidu' },
+    { num:12, pos:'DF', en:'Marvin Senaya' },
+    { num:13, pos:'MF', en:'Augustine Boakye' },
+    { num:14, pos:'MF', en:'Abdul Fatawu Issahaku' },
+    { num:15, pos:'MF', en:'Elisha Owusu' },
+    { num:16, pos:'MF', en:'Thomas Partey' },
+    { num:17, pos:'MF', en:'Kwasi Sibo' },
+    { num:18, pos:'MF', en:'Kamal Deen Sulemana' },
+    { num:19, pos:'MF', en:'Caleb Yirenkyi' },
+    { num:20, pos:'FW', en:'Prince Kwabena Adu' },
+    { num:21, pos:'FW', en:'Jordan Ayew' },
+    { num:22, pos:'FW', en:'Christopher Bonsu Baah' },
+    { num:23, pos:'FW', en:'Ernest Nuamah' },
+    { num:24, pos:'FW', en:'Antoine Semenyo' },
+    { num:25, pos:'FW', en:'Brandon Thomas-Asante' },
+    { num:26, pos:'FW', en:'Inaki Williams' },
+  ]},
+};
+
+let currentTeam = '法國';
+let selectedPlayer = null;
+
+
+function initSquads() {
+  const teams = Object.keys(SQUADS);
+  const sel = document.getElementById('squadTeamSelector');
+  sel.innerHTML = teams.map(t =>
+    `<button class="team-select-btn ${t===currentTeam?'active':''}" data-team="${t}" onclick="selectTeam('${t}',this)">
+      ${SQUADS[t].flag} ${t}
+    </button>`
+  ).join('');
+  renderSquad(currentTeam);
+}
+
+function selectTeam(team, btn) {
+  currentTeam = team;
+  document.querySelectorAll('.team-select-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderSquad(team);
+}
+
+function renderSquad(teamName) {
+  const t = SQUADS[teamName];
+  const posOrder = ['GK','DF','MF','FW'];
+  const posLabel = {GK:'門將',DF:'後衛',MF:'中場',FW:'前鋒'};
+  const hasStats = t.players.some(p => p.caps !== undefined);
+
+  // header meta — fifaRank/wc_titles only on the 6 detailed teams
+  let metaBits = `主教練：${t.coach}`;
+  if (t.fifaRank) metaBits += ` · FIFA 排名：第 ${t.fifaRank} 位`;
+  if (t.wc_titles !== undefined) metaBits += ` · 世界盃冠軍：${t.wc_titles} 次`;
+
+  let statsBar = `<div class="squad-stat"><div class="squad-stat-n">${t.players.length}</div><div class="squad-stat-l">名單人數</div></div>`;
+  if (hasStats) {
+    const totalCaps = t.players.reduce((s,p)=>s+(p.caps||0),0);
+    const intlGoals = t.players.reduce((s,p)=>s+(p.goals||0),0);
+    statsBar += `<div class="squad-stat"><div class="squad-stat-n">${totalCaps}</div><div class="squad-stat-l">總出賽次數</div></div>
+      <div class="squad-stat"><div class="squad-stat-n">${intlGoals}</div><div class="squad-stat-l">國際進球</div></div>`;
+  }
+
+  let html = `<div class="squad-header">
+    <div class="squad-flag">${t.flag}</div>
+    <div style="flex:1">
+      <div class="squad-team-name">${teamName}${TEAM_EN[teamName]?` <span style="font-size:13px;color:var(--text-muted);font-weight:400;">${TEAM_EN[teamName]}</span>`:''}</div>
+      <div class="squad-team-meta">${metaBits}</div>
+      <div class="squad-stats-bar">${statsBar}</div>
+    </div>
+  </div>`;
+
+  posOrder.forEach(pos => {
+    const players = t.players.filter(p => p.pos === pos);
+    if (!players.length) return;
+    html += `<div class="pos-section-label">${posLabel[pos]}（${players.length}）</div>
+    <div class="players-grid">`;
+    players.forEach(p => {
+      const display = p.name || p.en;
+      const sub = p.name ? p.en : '';
+      const clubLine = p.club ? `<div class="player-card-club">🏟 ${p.club}</div>` : '';
+      const statLine = (p.caps !== undefined)
+        ? `<div class="player-card-stats"><span class="pcs">帽 <span>${p.caps}</span></span><span class="pcs">進 <span>${p.goals}</span></span></div>`
+        : '';
+      html += `<div class="player-card" onclick="openPlayer('${teamName}',${p.num})">
+        <div class="player-photo-placeholder">${{'GK':'🧤','DF':'🛡️','MF':'⚙️','FW':'⚽'}[p.pos]}</div>
+        <div class="player-card-body">
+          <div class="player-card-num">#${p.num} · ${p.pos}</div>
+          <div class="player-card-name">${display}</div>
+          ${sub ? `<div class="player-card-club" style="color:var(--text-muted)">${sub}</div>` : ''}
+          ${clubLine}
+          ${statLine}
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+  });
+
+  document.getElementById('squadContent').innerHTML = html;
+}
+
+function openPlayer(teamName, num) {
+  const t = SQUADS[teamName];
+  const p = t.players.find(x => x.num === num);
+  if (!p) return;
+  const display = p.name || p.en;
+
+  const seasonsHtml = (p.seasons || []).map(s =>
+    `<tr><td>${s.y} ${s.club}</td><td>${s.apps}</td><td>${s.g}</td><td>${s.a}</td></tr>`
+  ).join('');
+
+  const statsBlock = (p.caps !== undefined) ? `
+    <div style="display:flex;gap:12px;margin-top:8px;">
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--gold)">${p.caps}</div><div style="font-size:11px;color:var(--text-muted)">出賽</div></div>
+      <div style="text-align:center"><div style="font-size:1.1rem;font-weight:700;color:var(--green-bright)">${p.goals}</div><div style="font-size:11px;color:var(--text-muted)">進球</div></div>
+    </div>` : '';
+
+  const clubLine = p.club ? `🏟 ${p.club}<br>` : '';
+
+  const seasonsSection = seasonsHtml ? `
+    <div class="modal-section-title">近三季俱樂部數據</div>
+    <table class="season-table">
+      <thead><tr><th>賽季 / 球隊</th><th>出賽</th><th>進球</th><th>助攻</th></tr></thead>
+      <tbody>${seasonsHtml}</tbody>
+    </table>` : '';
+
+  const modalHtml = `<div class="player-modal-bg" id="playerModal" onclick="if(event.target===this)closePlayer()">
+    <div class="player-modal">
+      <button class="modal-close" onclick="closePlayer()">✕ 關閉</button>
+      <div class="modal-hero">
+        <div class="modal-photo-ph">${{'GK':'🧤','DF':'🛡️','MF':'⚙️','FW':'⚽'}[p.pos]}</div>
+        <div>
+          <div class="modal-name">${display}</div>
+          ${p.name ? `<div style="font-size:12px;color:var(--gold);margin-top:2px;">${p.en}</div>` : ''}
+          <div class="modal-meta">
+            #${p.num} · ${{'GK':'門將','DF':'後衛','MF':'中場','FW':'前鋒'}[p.pos]}<br>
+            ${clubLine}${t.flag} ${teamName} 國家隊
+          </div>
+          ${statsBlock}
+        </div>
+      </div>
+      <div class="modal-body">
+        ${seasonsSection}
+        <div class="modal-section-title" style="margin-top:1rem;">🤖 AI 球員分析</div>
+        <div class="modal-ai-bio" id="playerBio">
+          <span class="spinner"></span> AI 分析中...
+        </div>
+        <button onclick="askPlayerAnalysis('${teamName}','${display}','${p.en}')"
+          style="margin-top:0.75rem;width:100%;background:var(--pitch-surface);border:1px solid var(--pitch-border);border-radius:7px;padding:8px;color:var(--text-secondary);font-size:13px;cursor:pointer;">
+          💬 在 AI 對話中深入討論
+        </button>
+      </div>
+    </div>
+  </div>`;
+
+  document.body.insertAdjacentHTML('beforeend', modalHtml);
+  loadPlayerBio(p, teamName);
+}
+
+async function loadPlayerBio(p, teamName) {
+  const bioEl = document.getElementById('playerBio');
+  if (!bioEl) return;
+  const display = p.name || p.en;
+  const key = state.apiKeys.anthropic;
+  if (!key) {
+    const statLine = (p.caps !== undefined) ? `\n\n國家隊出賽 ${p.caps} 次，攻入 ${p.goals} 球。` : '';
+    bioEl.textContent = `${display}（${p.en}）${statLine}\n\n⚠️ 設定 Anthropic API Key 可獲得 AI 自動生成的詳細球員分析。`;
+    return;
+  }
+  const statContext = (p.caps !== undefined) ? `（效力 ${p.club||'—'}，${p.caps} 場國際賽 ${p.goals} 球）` : '';
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        messages:[{ role:'user', content:
+          `請用繁體中文，以 150-200 字簡要介紹 2026 世界盃 ${teamName} 球員 ${display}（${p.en}）：
+1. 本屆世界盃角色與重要性
+2. 踢法風格與技術特點
+3. 本賽季狀態評估 ${statContext}
+4. 本屆值得關注的理由
+請直接給出分析，不需要前言。` }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '暫時無法取得分析資料。';
+    if (bioEl) bioEl.textContent = text;
+  } catch(e) {
+    if (bioEl) bioEl.textContent = '無法連線取得 AI 分析，請確認 API Key 設定。';
+  }
+}
+
+function closePlayer() {
+  const modal = document.getElementById('playerModal');
+  if (modal) modal.remove();
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closePlayer(); });
+
+function askPlayerAnalysis(teamName, name, en) {
+  closePlayer();
+  showTab('ai');
+  setTimeout(() => {
+    document.getElementById('aiInputField').value = `深入分析 ${teamName} 的 ${name}（${en}）：戰術定位、風格特色、本屆世界盃預測表現，以及對整支球隊的重要性。`;
+    sendAiMessage();
+  }, 150);
 }
 
 // ===== INIT =====
