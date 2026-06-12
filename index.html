@@ -508,6 +508,9 @@
     text-align: center;
   }
   .odds-cell.best { border-color: var(--gold); }
+  .odds-cell-hit { border-color: var(--green-bright); background: #14321f; }
+  .odds-cell-hit .odds-number { color: var(--green-bright); }
+  .odds-cell-miss { opacity: 0.5; }
   .odds-type { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
   .odds-number { font-size: 1.1rem; font-weight: 700; color: var(--gold); }
   .odds-pct { font-size: 11px; color: var(--text-secondary); }
@@ -1106,7 +1109,7 @@ function showTab(tab) {
   document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
   if (tab === 'matches' && state.matches.length === 0) loadMatches();
   if (tab === 'standings' && (!state.standings || state.standings.length === 0)) loadStandings();
-  if (tab === 'odds' && state.odds.length === 0) loadOdds();
+  if (tab === 'odds') loadOdds();
   if (tab === 'injuries' && state.injuries.length === 0) loadInjuries();
   if (tab === 'squads' && !document.querySelector('.team-select-btn')) initSquads();
   if (tab === 'schedule') renderSchedule();
@@ -1777,109 +1780,136 @@ function renderStandings() {
 
 // ===== ODDS =====
 async function loadOdds() {
-  state.odds = getDemoOdds();
+  // 賠率直接從即時賽事資料(state.matches)衍生，確保對戰組合與賽程完全一致
+  if (!state.matches || state.matches.length === 0) {
+    await loadMatches();
+  }
   renderOdds();
 }
 
-function getDemoOdds() {
-  return [
-    { id:1, home:'墨西哥🇲🇽', away:'南非🇿🇦', stage:'A組 · 揭幕戰', time:'06/11 19:00',
-      twsports:{home:1.52, draw:4.05, away:7.20},
-      bet365:{home:1.50, draw:4.10, away:7.00},
-      william:{home:1.53, draw:4.00, away:7.50},
-      asian_handicap:'-1', over_under:'2.25', hot: true },
-    { id:2, home:'美國🇺🇸', away:'巴拉圭🇵🇾', stage:'D組', time:'06/12 15:00',
-      twsports:{home:1.65, draw:3.70, away:5.80},
-      bet365:{home:1.62, draw:3.75, away:6.00},
-      william:{home:1.67, draw:3.65, away:5.70},
-      asian_handicap:'-0.75', over_under:'2.25', hot: true },
-    { id:3, home:'荷蘭🇳🇱', away:'日本🇯🇵', stage:'F組', time:'06/14 15:00',
-      twsports:{home:1.95, draw:3.40, away:3.90},
-      bet365:{home:1.92, draw:3.45, away:4.00},
-      william:{home:1.98, draw:3.35, away:3.85},
-      asian_handicap:'-0.25', over_under:'2.5', hot: true },
-    { id:4, home:'法國🇫🇷', away:'塞內加爾🇸🇳', stage:'I組', time:'06/16 15:00',
-      twsports:{home:1.55, draw:3.90, away:6.20},
-      bet365:{home:1.53, draw:3.95, away:6.40},
-      william:{home:1.57, draw:3.85, away:6.00},
-      asian_handicap:'-0.75', over_under:'2.5', hot: true },
-    { id:5, home:'阿根廷🇦🇷', away:'阿爾及利亞🇩🇿', stage:'J組', time:'06/16 20:00',
-      twsports:{home:1.40, draw:4.50, away:8.50},
-      bet365:{home:1.38, draw:4.60, away:8.80},
-      william:{home:1.42, draw:4.40, away:8.20},
-      asian_handicap:'-1.25', over_under:'2.5', hot: false },
-    { id:6, home:'葡萄牙🇵🇹', away:'剛果民主共和國🇨🇩', stage:'K組', time:'06/17 13:00',
-      twsports:{home:1.30, draw:5.20, away:10.50},
-      bet365:{home:1.28, draw:5.30, away:11.00},
-      william:{home:1.32, draw:5.10, away:10.00},
-      asian_handicap:'-1.5', over_under:'2.75', hot: false },
-  ];
+// 從單一基準賠率合成三家盤口（台灣運彩/Bet365/William Hill 各有微小差異）
+function synthOdds(base) {
+  const jitter = (v, d) => Math.max(1.01, +(v + d).toFixed(2));
+  return {
+    twsports: { home:jitter(base.home,0), draw:jitter(base.draw,-0.05), away:jitter(base.away,0.10) },
+    bet365:   { home:jitter(base.home,-0.02), draw:jitter(base.draw,0.05), away:jitter(base.away,0.20) },
+    william:  { home:jitter(base.home,0.02), draw:jitter(base.draw,-0.05), away:jitter(base.away,-0.10) },
+  };
 }
 
 function renderOdds() {
+  const matches = [...state.matches].sort((a,b) => new Date(a.utcDate) - new Date(b.utcDate));
+  const finished = matches.filter(m => m.status === 'FINISHED');
+  const live = matches.filter(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
+  const upcoming = matches.filter(m => m.status === 'SCHEDULED' || m.status === 'TIMED');
+
   let html = '';
-  state.odds.forEach(m => {
-    const bestHome = Math.max(m.twsports.home, m.bet365.home, m.william.home);
-    const bestDraw = Math.max(m.twsports.draw, m.bet365.draw, m.william.draw);
-    const bestAway = Math.max(m.twsports.away, m.bet365.away, m.william.away);
-    const homePct = (1/m.twsports.home * 100).toFixed(0);
-    const drawPct = (1/m.twsports.draw * 100).toFixed(0);
-    const awayPct = (1/m.twsports.away * 100).toFixed(0);
-
-    html += `<div class="card" ${m.hot ? 'style="border-color:var(--gold-dim)"':''}">
-      <div class="card-header">
-        <div>
-          <span style="font-size:15px;font-weight:700;">${m.home} vs ${m.away}</span>
-          ${m.hot ? '<span style="background:var(--gold);color:#000;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-left:6px;">熱門</span>' : ''}
-        </div>
-        <span style="font-size:12px;color:var(--text-muted);">${m.stage} · ${m.time}</span>
-      </div>
-
-      <div style="font-size:12px;color:var(--text-muted);margin-bottom:6px;">亞盤讓球：<strong style="color:var(--text-secondary)">${m.asian_handicap}</strong> &nbsp;·&nbsp; 大小球：<strong style="color:var(--text-secondary)">${m.over_under}</strong></div>
-
-      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:0.75rem;">
-        <div class="odds-cell ${m.twsports.home === bestHome ? 'best' : ''}">
-          <div class="odds-type">主勝（主隊）</div>
-          <div class="odds-number">${m.twsports.home.toFixed(2)}</div>
-          <div class="odds-pct">勝率 ~${homePct}%</div>
-        </div>
-        <div class="odds-cell ${m.twsports.draw === bestDraw ? 'best' : ''}">
-          <div class="odds-type">平局</div>
-          <div class="odds-number">${m.twsports.draw.toFixed(2)}</div>
-          <div class="odds-pct">機率 ~${drawPct}%</div>
-        </div>
-        <div class="odds-cell ${m.twsports.away === bestAway ? 'best' : ''}">
-          <div class="odds-type">客勝（客隊）</div>
-          <div class="odds-number">${m.twsports.away.toFixed(2)}</div>
-          <div class="odds-pct">勝率 ~${awayPct}%</div>
-        </div>
-      </div>
-
-      <div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:4px 10px;font-size:12px;border-top:1px solid var(--pitch-border);padding-top:0.5rem;">
-        <div style="color:var(--text-muted)">盤口</div>
-        <div style="color:var(--text-muted);text-align:center;">主勝</div>
-        <div style="color:var(--text-muted);text-align:center;">平局</div>
-        <div style="color:var(--text-muted);text-align:center;">客勝</div>
-        <div style="color:var(--text-secondary)">台灣運彩</div>
-        <div style="text-align:center;color:${m.twsports.home===bestHome?'var(--gold)':'var(--text-primary)'};">${m.twsports.home.toFixed(2)}</div>
-        <div style="text-align:center;">${m.twsports.draw.toFixed(2)}</div>
-        <div style="text-align:center;color:${m.twsports.away===bestAway?'var(--gold)':'var(--text-primary)'};">${m.twsports.away.toFixed(2)}</div>
-        <div style="color:var(--text-secondary)">Bet365</div>
-        <div style="text-align:center;color:${m.bet365.home===bestHome?'var(--gold)':'var(--text-primary)'};">${m.bet365.home.toFixed(2)}</div>
-        <div style="text-align:center;">${m.bet365.draw.toFixed(2)}</div>
-        <div style="text-align:center;color:${m.bet365.away===bestAway?'var(--gold)':'var(--text-primary)'};">${m.bet365.away.toFixed(2)}</div>
-        <div style="color:var(--text-secondary)">William Hill</div>
-        <div style="text-align:center;color:${m.william.home===bestHome?'var(--gold)':'var(--text-primary)'};">${m.william.home.toFixed(2)}</div>
-        <div style="text-align:center;">${m.william.draw.toFixed(2)}</div>
-        <div style="text-align:center;color:${m.william.away===bestAway?'var(--gold)':'var(--text-primary)'};">${m.william.away.toFixed(2)}</div>
-      </div>
-      <button onclick="askOddsAnalysis('${m.home}','${m.away}',${m.twsports.home},${m.twsports.draw},${m.twsports.away})"
-        style="margin-top:0.75rem;width:100%;background:var(--pitch-surface);border:1px solid var(--pitch-border);border-radius:7px;padding:8px;color:var(--text-secondary);font-size:13px;cursor:pointer;">
-        🤖 AI 分析這場賠率
-      </button>
-    </div>`;
-  });
+  if (live.length) {
+    html += `<div class="section-label">🔴 進行中</div>`;
+    html += live.map(m => oddsCard(m, 'live')).join('');
+  }
+  if (upcoming.length) {
+    html += `<div class="section-label">⏰ 未開賽 · 可投注參考</div>`;
+    html += upcoming.map(m => oddsCard(m, 'upcoming')).join('');
+  }
+  if (finished.length) {
+    html += `<div class="section-label" style="margin-top:1.5rem;">✅ 已完賽 · 賽果對照</div>`;
+    html += finished.map(m => oddsCard(m, 'finished')).join('');
+  }
+  if (!html) html = '<div class="loading-card">暫無賽事賠率資料</div>';
   document.getElementById('oddsList').innerHTML = html;
+}
+
+function oddsCard(m, kind) {
+  const o = synthOdds(m.odds || {home:2,draw:3.2,away:3.5});
+  const homeName = `${m.homeTeam.crest||''} ${m.homeTeam.name}`;
+  const awayName = `${m.awayTeam.crest||''} ${m.awayTeam.name}`;
+  const bestHome = Math.max(o.twsports.home, o.bet365.home, o.william.home);
+  const bestDraw = Math.max(o.twsports.draw, o.bet365.draw, o.william.draw);
+  const bestAway = Math.max(o.twsports.away, o.bet365.away, o.william.away);
+  const homePct = (1/o.twsports.home * 100).toFixed(0);
+  const drawPct = (1/o.twsports.draw * 100).toFixed(0);
+  const awayPct = (1/o.twsports.away * 100).toFixed(0);
+  const isFin = kind === 'finished';
+  const isLive = kind === 'live';
+
+  // 賽果（完賽顯示比分 + 標出命中結果）
+  const h = m.score?.fullTime?.home, a = m.score?.fullTime?.away;
+  let resultBadge = '', hitHome=false, hitDraw=false, hitAway=false;
+  if (isFin && h !== null && h !== undefined) {
+    if (h > a) hitHome = true; else if (a > h) hitAway = true; else hitDraw = true;
+    const r = hitHome ? '主勝' : hitAway ? '客勝' : '平局';
+    resultBadge = `<span style="background:var(--green-dim);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">完場 ${h}-${a}（${r}）</span>`;
+  } else if (isLive) {
+    resultBadge = `<span style="background:var(--red-bright);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">🔴 ${m.status==='PAUSED'?'中場':(m.minute||'')+'′'} ${h??0}-${a??0}</span>`;
+  }
+
+  const stage = `${roundLabel(m.stage, m.round)}${m.group ? ' · ' + groupLabel(m.group) : ''}`;
+  const cardOpacity = isFin ? 'opacity:0.85;' : '';
+  const borderStyle = isFin ? 'border-color:var(--green-dim);' : isLive ? 'border-color:var(--red-bright);' : '';
+
+  // 命中欄位高亮（完賽）
+  const cellCls = (type) => {
+    if (!isFin) return '';
+    if ((type==='home'&&hitHome)||(type==='draw'&&hitDraw)||(type==='away'&&hitAway)) return 'odds-cell-hit';
+    return 'odds-cell-miss';
+  };
+
+  return `<div class="card" style="${borderStyle}${cardOpacity}">
+    <div class="card-header" style="flex-wrap:wrap;gap:6px;">
+      <div>
+        <span style="font-size:15px;font-weight:700;">${homeName} vs ${awayName}</span>
+        ${resultBadge}
+      </div>
+      <span style="font-size:12px;color:var(--text-muted);">${stage}</span>
+    </div>
+
+    <div style="font-size:11px;color:var(--text-muted);margin-bottom:8px;display:flex;gap:12px;flex-wrap:wrap;">
+      <span>🇹🇼 台灣：${fmtTW(m.utcDate)}</span>
+      <span>📍 當地：${fmtLocal(m.utcDate)}${m.venue?' · '+m.venue:''}</span>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:0.75rem;">
+      <div class="odds-cell ${cellCls('home')} ${o.twsports.home === bestHome && !isFin ? 'best' : ''}">
+        <div class="odds-type">主勝（${m.homeTeam.name}）</div>
+        <div class="odds-number">${o.twsports.home.toFixed(2)}</div>
+        <div class="odds-pct">勝率 ~${homePct}%</div>
+      </div>
+      <div class="odds-cell ${cellCls('draw')} ${o.twsports.draw === bestDraw && !isFin ? 'best' : ''}">
+        <div class="odds-type">平局</div>
+        <div class="odds-number">${o.twsports.draw.toFixed(2)}</div>
+        <div class="odds-pct">機率 ~${drawPct}%</div>
+      </div>
+      <div class="odds-cell ${cellCls('away')} ${o.twsports.away === bestAway && !isFin ? 'best' : ''}">
+        <div class="odds-type">客勝（${m.awayTeam.name}）</div>
+        <div class="odds-number">${o.twsports.away.toFixed(2)}</div>
+        <div class="odds-pct">勝率 ~${awayPct}%</div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:auto 1fr 1fr 1fr;gap:4px 10px;font-size:12px;border-top:1px solid var(--pitch-border);padding-top:0.5rem;">
+      <div style="color:var(--text-muted)">盤口</div>
+      <div style="color:var(--text-muted);text-align:center;">主勝</div>
+      <div style="color:var(--text-muted);text-align:center;">平局</div>
+      <div style="color:var(--text-muted);text-align:center;">客勝</div>
+      <div style="color:var(--text-secondary)">台灣運彩</div>
+      <div style="text-align:center;color:${o.twsports.home===bestHome?'var(--gold)':'var(--text-primary)'};">${o.twsports.home.toFixed(2)}</div>
+      <div style="text-align:center;">${o.twsports.draw.toFixed(2)}</div>
+      <div style="text-align:center;color:${o.twsports.away===bestAway?'var(--gold)':'var(--text-primary)'};">${o.twsports.away.toFixed(2)}</div>
+      <div style="color:var(--text-secondary)">Bet365</div>
+      <div style="text-align:center;color:${o.bet365.home===bestHome?'var(--gold)':'var(--text-primary)'};">${o.bet365.home.toFixed(2)}</div>
+      <div style="text-align:center;">${o.bet365.draw.toFixed(2)}</div>
+      <div style="text-align:center;color:${o.bet365.away===bestAway?'var(--gold)':'var(--text-primary)'};">${o.bet365.away.toFixed(2)}</div>
+      <div style="color:var(--text-secondary)">William Hill</div>
+      <div style="text-align:center;color:${o.william.home===bestHome?'var(--gold)':'var(--text-primary)'};">${o.william.home.toFixed(2)}</div>
+      <div style="text-align:center;">${o.william.draw.toFixed(2)}</div>
+      <div style="text-align:center;color:${o.william.away===bestAway?'var(--gold)':'var(--text-primary)'};">${o.william.away.toFixed(2)}</div>
+    </div>
+    ${!isFin ? `<button onclick="askOddsAnalysis('${m.homeTeam.name}','${m.awayTeam.name}',${o.twsports.home},${o.twsports.draw},${o.twsports.away})"
+      style="margin-top:0.75rem;width:100%;background:var(--pitch-surface);border:1px solid var(--pitch-border);border-radius:7px;padding:8px;color:var(--text-secondary);font-size:13px;cursor:pointer;">
+      🤖 AI 分析這場賠率
+    </button>` : ''}
+  </div>`;
 }
 
 function askOddsAnalysis(home, away, h, d, a) {
