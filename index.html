@@ -123,6 +123,36 @@
     font-size: 11px;
     color: var(--text-muted);
   }
+  .refresh-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+  .source-pill {
+    font-size: 10px; font-weight: 600;
+    padding: 2px 8px; border-radius: 10px;
+    cursor: pointer; white-space: nowrap;
+    border: 1px solid var(--pitch-border);
+    background: var(--pitch-surface); color: var(--text-muted);
+    transition: all 0.15s;
+  }
+  .source-pill:hover { border-color: var(--gold-dim); color: var(--gold); }
+  .source-pill.live { color: var(--green-bright); border-color: var(--green-dim); }
+  .source-pill.auto { color: var(--gold); border-color: var(--gold-dim); }
+  .source-pill.demo { color: var(--amber); border-color: #78350f; }
+  .source-info {
+    position: absolute; right: 12px; top: 56px; z-index: 200;
+    max-width: 340px; background: var(--pitch-card);
+    border: 1px solid var(--pitch-border); border-radius: 10px;
+    padding: 0.9rem 1rem; font-size: 12px; line-height: 1.7;
+    color: var(--text-secondary); box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .source-info.hidden { display: none; }
+  .source-info h4 { font-size: 13px; color: var(--gold); margin-bottom: 6px; }
+  .source-info .si-row { display: flex; gap: 6px; margin-bottom: 4px; }
+  .source-info .si-dot { flex-shrink: 0; }
+  .source-info .si-close {
+    margin-top: 8px; width: 100%; text-align: center;
+    background: var(--pitch-surface); border: 1px solid var(--pitch-border);
+    border-radius: 6px; padding: 5px; color: var(--text-secondary);
+    cursor: pointer; font-size: 12px;
+  }
   .refresh-btn {
     background: none;
     border: 1px solid var(--pitch-border);
@@ -915,12 +945,18 @@
   </div>
   <div class="header-right">
     <span class="live-badge">LIVE</span>
-    <span class="last-update" id="lastUpdate">更新中...</span>
+    <div class="refresh-wrap">
+      <span class="last-update" id="lastUpdate">更新中...</span>
+      <span class="source-pill" id="sourcePill" onclick="toggleSourceInfo()" title="">資料源：偵測中…</span>
+    </div>
     <button class="refresh-btn" onclick="refreshAll()">
       <span id="refreshIcon">↻</span> 重新整理
     </button>
   </div>
 </div>
+
+<!-- 資料源說明小卡（點 source-pill 展開） -->
+<div id="sourceInfo" class="source-info hidden"></div>
 
 <nav class="nav">
   <button class="nav-btn active" onclick="showTab('matches')" data-tab="matches">⚡ 即時賽事</button>
@@ -1409,16 +1445,61 @@ async function loadMatches() {
   updateDataSourceLabel();
 }
 
+// 各資料源的顯示設定
+const SOURCE_META = {
+  balldontlie: { pill:'🟢 即時', cls:'live',
+    title:'BALLDONTLIE 即時資料',
+    freq:'秒級即時更新',
+    desc:'涵蓋全部 104 場，比賽進行中比分自動刷新。按「重新整理」會立即抓取當下最新比分。' },
+  openfootball: { pill:'📡 自動', cls:'auto',
+    title:'openfootball 公開資料',
+    freq:'約每日更新一次',
+    desc:'免金鑰自動抓取，涵蓋全部 104 場。資料源約每日才更新，因此短時間內重複按「重新整理」可能抓到同一份；強制不使用快取，但更新快慢取決於來源端。' },
+  'football-data': { pill:'📡 API', cls:'auto',
+    title:'football-data.org API',
+    freq:'依方案而定',
+    desc:'透過金鑰抓取，按「重新整理」會即時請求最新資料。' },
+  demo: { pill:'⚠️ 備援', cls:'demo',
+    title:'離線備援資料',
+    freq:'不會自動更新',
+    desc:'目前未連上任何線上資料源（可能是網路或來源端問題）。顯示的是內建備援資料。填入 BALLDONTLIE 金鑰，或稍後再按「重新整理」嘗試重新連線。' },
+};
+
 function updateDataSourceLabel() {
+  const meta = SOURCE_META[state.dataSource] || SOURCE_META.demo;
+  // 即時賽事頁內的長標籤
   const el = document.getElementById('dataSourceLabel');
-  if (!el) return;
-  const labels = {
-    'balldontlie':'🟢 即時更新（BALLDONTLIE 全104場·秒級）',
-    'openfootball':'📡 自動更新（openfootball 全104場·約每日）',
-    'football-data':'📡 football-data API',
-    'demo':'⚠️ 離線備援資料（填入金鑰可即時更新）'
-  };
-  el.textContent = labels[state.dataSource] || '';
+  if (el) {
+    const labels = {
+      'balldontlie':'🟢 即時更新（BALLDONTLIE 全104場·秒級）',
+      'openfootball':'📡 自動更新（openfootball 全104場·約每日）',
+      'football-data':'📡 football-data API',
+      'demo':'⚠️ 離線備援資料（填入金鑰可即時更新）'
+    };
+    el.textContent = labels[state.dataSource] || '';
+  }
+  // 標題列的小膠囊
+  const pill = document.getElementById('sourcePill');
+  if (pill) {
+    pill.textContent = meta.pill + ' · ' + meta.freq;
+    pill.className = 'source-pill ' + meta.cls;
+    pill.setAttribute('title', '點擊看資料源說明');
+  }
+}
+
+// 點膠囊展開／收合資料源說明卡
+function toggleSourceInfo() {
+  const box = document.getElementById('sourceInfo');
+  if (!box) return;
+  if (!box.classList.contains('hidden')) { box.classList.add('hidden'); return; }
+  const meta = SOURCE_META[state.dataSource] || SOURCE_META.demo;
+  box.innerHTML = `
+    <h4>${meta.pill} ${meta.title}</h4>
+    <div class="si-row"><span class="si-dot">🔄</span><div><strong>更新頻率：</strong>${meta.freq}</div></div>
+    <div class="si-row"><span class="si-dot">ℹ️</span><div>${meta.desc}</div></div>
+    <div class="si-row"><span class="si-dot">👆</span><div>按右上角「重新整理」會立即向資料源抓取一次最新資料。</div></div>
+    <button class="si-close" onclick="toggleSourceInfo()">關閉</button>`;
+  box.classList.remove('hidden');
 }
 
 function getDemoMatches() {
