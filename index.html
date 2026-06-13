@@ -948,6 +948,7 @@
         2026年6月11日 – 7月19日
       </div>
     </div>
+    <div id="dataSourceLabel" style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:0.75rem;"></div>
     <div class="stats-grid" id="summaryStats"></div>
     <div class="filter-row" id="matchFilters">
       <button class="filter-btn active" onclick="filterMatches('all',this)">全部</button>
@@ -1041,20 +1042,26 @@
   <div class="section" id="section-settings">
     <div class="card">
       <div class="card-title" style="margin-bottom:1rem;">🔑 API 金鑰設定</div>
-      <div class="section-label">Anthropic API Key（AI 分析功能）</div>
+      <div class="section-label">🟢 BALLDONTLIE API Key（即時比分 · 推薦）</div>
+      <div class="settings-row">
+        <input type="text" class="settings-input" id="balldontlieKey" placeholder="在 app.balldontlie.io 申請" />
+        <button class="settings-save-btn" onclick="saveKey('balldontlie')">儲存</button>
+      </div>
+      <div class="section-label" style="margin-top:1rem;">Anthropic API Key（AI 分析功能）</div>
       <div class="settings-row">
         <input type="password" class="settings-input" id="anthropicKey" placeholder="sk-ant-..." />
         <button class="settings-save-btn" onclick="saveKey('anthropic')">儲存</button>
       </div>
-      <div class="section-label" style="margin-top:1rem;">Football-Data.org API Key（即時賽事）</div>
+      <div class="section-label" style="margin-top:1rem;">Football-Data.org API Key（備用）</div>
       <div class="settings-row">
-        <input type="text" class="settings-input" id="footballKey" placeholder="在 football-data.org 免費申請" />
+        <input type="text" class="settings-input" id="footballKey" placeholder="在 football-data.org 申請（備用）" />
         <button class="settings-save-btn" onclick="saveKey('football')">儲存</button>
       </div>
       <div style="margin-top:0.75rem;padding:0.75rem;background:var(--pitch-surface);border-radius:8px;font-size:12px;color:var(--text-muted);line-height:1.7;">
-        📋 申請方式：<br>
-        • <strong style="color:var(--text-secondary)">football-data.org</strong>：免費版即包含世界盃(WC)即時比分與積分榜，限每分鐘10次請求。<strong style="color:var(--gold)">必須有金鑰</strong>，無金鑰時 API 會回傳空資料。瀏覽器直連若被 CORS 擋下，App 會自動切換 proxy 中繼<br>
-        • <strong style="color:var(--text-secondary)">Anthropic API</strong>：console.anthropic.com 取得，AI 分析與球員介紹所需
+        📋 即時更新說明：<br>
+        • <strong style="color:var(--green-bright)">BALLDONTLIE（推薦）</strong>：涵蓋全部 104 場、秒級即時比分與積分榜。app.balldontlie.io 免費註冊，有 48 小時 GOAT 方案試用；即時比分(Matches/Standings)需 GOAT 方案($39.99/月)。填入後立即生效自動更新。<br>
+        • <strong style="color:var(--text-secondary)">免金鑰備援</strong>：無任何金鑰時，App 會自動抓取 openfootball 公開資料（全 104 場，約每日更新一次），仍比手動好；再不行才用內建備援。<br>
+        • <strong style="color:var(--text-secondary)">Anthropic</strong>：console.anthropic.com 取得，AI 分析與球員介紹所需。
       </div>
     </div>
     <div class="card">
@@ -1115,23 +1122,31 @@ const state = {
   matchFilter: 'all',
   injuryFilter: 'all',
   autoRefreshTimer: null,
+  dataSource: 'demo',
   refreshInterval: 60,
   apiKeys: {
     anthropic: localStorage.getItem('wc26_anthropic') || '',
     football: localStorage.getItem('wc26_football') || '',
+    balldontlie: localStorage.getItem('wc26_balldontlie') || '',
   }
 };
 
 // Load saved keys into UI
 document.getElementById('anthropicKey').value = state.apiKeys.anthropic;
 document.getElementById('footballKey').value = state.apiKeys.football;
+const bdlInput = document.getElementById('balldontlieKey');
+if (bdlInput) bdlInput.value = state.apiKeys.balldontlie;
 
 function saveKey(type) {
-  const el = document.getElementById(type === 'anthropic' ? 'anthropicKey' : 'footballKey');
+  const idMap = { anthropic:'anthropicKey', football:'footballKey', balldontlie:'balldontlieKey' };
+  const el = document.getElementById(idMap[type]);
+  if (!el) return;
   state.apiKeys[type] = el.value.trim();
   localStorage.setItem('wc26_' + type, state.apiKeys[type]);
   el.style.borderColor = 'var(--green-bright)';
   setTimeout(() => el.style.borderColor = '', 1500);
+  // 存入金鑰後立即重新抓取即時資料
+  if (type === 'balldontlie') { loadMatches(); loadStandings(); }
 }
 
 // ===== Tab navigation =====
@@ -1151,9 +1166,14 @@ function showTab(tab) {
 
 // ===== Refresh =====
 async function refreshAll() {
-  document.getElementById('refreshIcon').classList.add ? null : null;
   document.getElementById('refreshIcon').textContent = '⏳';
-  await Promise.all([loadMatches(), loadOdds()]);
+  await loadMatches();          // 重新計算所有比賽狀態（含自動完賽判定）
+  // 依目前所在分頁，重新渲染對應內容，確保狀態變化即時反映
+  const activeTab = document.querySelector('.nav-btn.active')?.dataset.tab;
+  if (activeTab === 'odds') renderOdds();
+  if (activeTab === 'schedule') renderSchedule();
+  if (activeTab === 'standings') { await loadStandings(); }
+  if (activeTab === 'bracket') renderBracket();
   document.getElementById('refreshIcon').textContent = '↻';
   document.getElementById('lastUpdate').textContent = '更新於 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
 }
@@ -1164,40 +1184,241 @@ function updateRefreshInterval() {
   state.autoRefreshTimer = setInterval(refreshAll, state.refreshInterval * 1000);
 }
 
-// ===== Football Data API =====
-// 注意：football-data.org 免費版包含世界盃(WC)，但 API 不允許瀏覽器跨域(CORS)直連，
-// 因此先嘗試直連，失敗時自動透過 CORS proxy 中繼。
+// ===== 自動抓取：BALLDONTLIE FIFA API（真正即時、含全部104場與即時比分，需金鑰）=====
+// 免費註冊 app.balldontlie.io 取得金鑰。比賽進行中分數秒級更新。
+const BDL_BASE = 'https://api.balldontlie.io/fifa/worldcup/v1';
+const BDL_TEAM_ZH = {'Mexico':'墨西哥','South Africa':'南非','South Korea':'南韓','Czech Republic':'捷克','Czechia':'捷克','Canada':'加拿大','Switzerland':'瑞士','Qatar':'卡達','Bosnia and Herzegovina':'波士尼亞','Bosnia & Herzegovina':'波士尼亞','Brazil':'巴西','Morocco':'摩洛哥','Scotland':'蘇格蘭','Haiti':'海地','USA':'美國','United States':'美國','Paraguay':'巴拉圭','Australia':'澳洲','Turkey':'土耳其','Türkiye':'土耳其','Germany':'德國','Curaçao':'古拉索','Curacao':'古拉索','Ivory Coast':'象牙海岸','Ecuador':'厄瓜多','Netherlands':'荷蘭','Japan':'日本','Tunisia':'突尼西亞','Sweden':'瑞典','Belgium':'比利時','Iran':'伊朗','Egypt':'埃及','New Zealand':'紐西蘭','Spain':'西班牙','Cape Verde':'維德角','Saudi Arabia':'沙烏地阿拉伯','Uruguay':'烏拉圭','France':'法國','Senegal':'塞內加爾','Iraq':'伊拉克','Norway':'挪威','Argentina':'阿根廷','Algeria':'阿爾及利亞','Austria':'奧地利','Jordan':'約旦','Portugal':'葡萄牙','DR Congo':'剛果民主共和國','Uzbekistan':'烏茲別克','Colombia':'哥倫比亞','England':'英格蘭','Croatia':'克羅埃西亞','Ghana':'迦納','Panama':'巴拿馬'};
+
+function bdlMapStatus(apiStatus, datetime) {
+  // balldontlie: scheduled / in_progress / completed / postponed / cancelled
+  if (apiStatus === 'completed') return 'FINISHED';
+  if (apiStatus === 'in_progress') return 'IN_PLAY';
+  return 'SCHEDULED';
+}
+
+async function fetchBalldontlie() {
+  const key = state.apiKeys.balldontlie;
+  if (!key) return null;
+  let all = [];
+  let cursor = null;
+  try {
+    for (let page = 0; page < 6; page++) { // 最多抓 6 頁(600場)足夠
+      const url = `${BDL_BASE}/matches?per_page=100` + (cursor ? `&cursor=${cursor}` : '');
+      const res = await fetch(url, { headers: { 'Authorization': key } });
+      if (!res.ok) return null;
+      const json = await res.json();
+      all = all.concat(json.data || []);
+      cursor = json.meta && json.meta.next_cursor;
+      if (!cursor) break;
+    }
+  } catch(e) { return null; }
+  if (!all.length) return null;
+
+  return all.map(mt => {
+    const zh1 = mt.home_team ? (BDL_TEAM_ZH[mt.home_team.name] || mt.home_team.name) : '待定';
+    const zh2 = mt.away_team ? (BDL_TEAM_ZH[mt.away_team.name] || mt.away_team.name) : '待定';
+    const status = bdlMapStatus(mt.status, mt.datetime);
+    const stageName = mt.stage ? mt.stage.name : '';
+    let stage = 'GROUP_STAGE', round = mt.round_number || null;
+    if (/Round of 32/i.test(stageName)) stage='LAST_32';
+    else if (/Round of 16/i.test(stageName)) stage='LAST_16';
+    else if (/Quarter/i.test(stageName)) stage='QUARTER_FINALS';
+    else if (/Semi/i.test(stageName)) stage='SEMI_FINALS';
+    else if (/Third/i.test(stageName)) stage='THIRD_PLACE';
+    else if (/Final/i.test(stageName)) stage='FINAL';
+
+    let home=null, away=null, scorePending=false;
+    if (status === 'FINISHED') {
+      if (mt.home_score !== null) { home=mt.home_score; away=mt.away_score; }
+      else scorePending = true;
+    } else if (status === 'IN_PLAY') {
+      home = mt.home_score ?? 0; away = mt.away_score ?? 0;
+    }
+    // 即時比賽時鐘
+    let minute = null;
+    if (status === 'IN_PLAY' && mt.clock_display) {
+      const cm = mt.clock_display.match(/(\d+)/);
+      if (cm) minute = parseInt(cm[1]);
+    }
+
+    return {
+      id: mt.id,
+      utcDate: mt.datetime,
+      venue: mt.stadium ? (BDL_TEAM_ZH[mt.stadium.city] || mt.stadium.city || '') : '',
+      group: mt.group ? 'GROUP_' + mt.group.name.replace('Group ','') : null,
+      stage, round,
+      homeTeam:{name:zh1, crest:TEAM_FLAG[zh1] || '🏳️'},
+      awayTeam:{name:zh2, crest:TEAM_FLAG[zh2] || '🏳️'},
+      status, minute, scorePending,
+      score:{fullTime:{home, away}},
+      odds:{home:2.0, draw:3.2, away:3.5, prev:{home:2.0, draw:3.2, away:3.5}}
+    };
+  });
+}
+
+// 抓取 balldontlie 即時積分榜
+async function fetchBalldontlieStandings() {
+  const key = state.apiKeys.balldontlie;
+  if (!key) return null;
+  try {
+    const res = await fetch(`${BDL_BASE}/group_standings`, { headers:{ 'Authorization': key } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    if (!json.data || !json.data.length) return null;
+    // 轉成 App 內部分組格式
+    const groups = {};
+    json.data.forEach(r => {
+      const g = r.group.name.replace('Group ','');
+      const zh = BDL_TEAM_ZH[r.team.name] || r.team.name;
+      (groups[g] = groups[g] || []).push({
+        position: r.position,
+        team: { name: zh, crest: TEAM_FLAG[zh] || '🏳️' },
+        playedGames: r.played, won: r.won, draw: r.drawn, lost: r.lost,
+        goalsFor: r.goals_for, goalsAgainst: r.goals_against,
+        goalDifference: r.goal_difference, points: r.points, form: ''
+      });
+    });
+    return Object.keys(groups).sort().map(g => ({
+      stage:'GROUP_STAGE', group:'GROUP_'+g,
+      table: groups[g].sort((a,b)=>a.position-b.position)
+    }));
+  } catch(e) { return null; }
+}
+
+// ===== 自動抓取：openfootball/worldcup.json（公開、免金鑰、含全部104場與比分）=====
+// 注意：此資料源由志工維護，約每日手動更新一次，非秒級即時，但涵蓋完整賽程與比分。
+const OF_URL = 'https://raw.githubusercontent.com/openfootball/worldcup.json/master/2026/worldcup.json';
+const OF_TEAM_ZH = {'Mexico':'墨西哥','South Africa':'南非','South Korea':'南韓','Czech Republic':'捷克','Canada':'加拿大','Switzerland':'瑞士','Qatar':'卡達','Bosnia and Herzegovina':'波士尼亞','Brazil':'巴西','Morocco':'摩洛哥','Scotland':'蘇格蘭','Haiti':'海地','USA':'美國','Paraguay':'巴拉圭','Australia':'澳洲','Turkey':'土耳其','Türkiye':'土耳其','Germany':'德國','Curaçao':'古拉索','Curacao':'古拉索','Ivory Coast':'象牙海岸','Ecuador':'厄瓜多','Netherlands':'荷蘭','Japan':'日本','Tunisia':'突尼西亞','Sweden':'瑞典','Belgium':'比利時','Iran':'伊朗','Egypt':'埃及','New Zealand':'紐西蘭','Spain':'西班牙','Cape Verde':'維德角','Saudi Arabia':'沙烏地阿拉伯','Uruguay':'烏拉圭','France':'法國','Senegal':'塞內加爾','Iraq':'伊拉克','Norway':'挪威','Argentina':'阿根廷','Algeria':'阿爾及利亞','Austria':'奧地利','Jordan':'約旦','Portugal':'葡萄牙','DR Congo':'剛果民主共和國','Uzbekistan':'烏茲別克','Colombia':'哥倫比亞','England':'英格蘭','Croatia':'克羅埃西亞','Ghana':'迦納','Panama':'巴拿馬','UEFA Path D winner':'捷克','UEFA Path A winner':'波士尼亞','UEFA Path B winner':'瑞典','UEFA Path C winner':'土耳其','IC Path 1 winner':'剛果民主共和國','IC Path 2 winner':'伊拉克'};
+const OF_GROUND_ZH = {'Mexico City':'墨西哥城','Guadalajara (Zapopan)':'瓜達拉哈拉','Monterrey (Guadalupe)':'蒙特雷','Toronto':'多倫多','Vancouver':'溫哥華','San Francisco Bay Area (Santa Clara)':'聖塔克拉拉','Los Angeles (Inglewood)':'洛杉磯','Seattle':'西雅圖','New York/New Jersey (East Rutherford)':'紐澤西','Boston (Foxborough)':'波士頓','Philadelphia':'費城','Miami (Miami Gardens)':'邁阿密','Atlanta':'亞特蘭大','Houston':'休士頓','Dallas (Arlington)':'達拉斯','Kansas City':'堪薩斯城'};
+const TEAM_FLAG = {'墨西哥':'🇲🇽','南非':'🇿🇦','南韓':'🇰🇷','捷克':'🇨🇿','加拿大':'🇨🇦','瑞士':'🇨🇭','卡達':'🇶🇦','波士尼亞':'🇧🇦','巴西':'🇧🇷','摩洛哥':'🇲🇦','蘇格蘭':'🏴󠁧󠁢󠁳󠁣󠁴󠁿','海地':'🇭🇹','美國':'🇺🇸','巴拉圭':'🇵🇾','澳洲':'🇦🇺','土耳其':'🇹🇷','德國':'🇩🇪','古拉索':'🇨🇼','象牙海岸':'🇨🇮','厄瓜多':'🇪🇨','荷蘭':'🇳🇱','日本':'🇯🇵','突尼西亞':'🇹🇳','瑞典':'🇸🇪','比利時':'🇧🇪','伊朗':'🇮🇷','埃及':'🇪🇬','紐西蘭':'🇳🇿','西班牙':'🇪🇸','維德角':'🇨🇻','沙烏地阿拉伯':'🇸🇦','烏拉圭':'🇺🇾','法國':'🇫🇷','塞內加爾':'🇸🇳','伊拉克':'🇮🇶','挪威':'🇳🇴','阿根廷':'🇦🇷','阿爾及利亞':'🇩🇿','奧地利':'🇦🇹','約旦':'🇯🇴','葡萄牙':'🇵🇹','剛果民主共和國':'🇨🇩','烏茲別克':'🇺🇿','哥倫比亞':'🇨🇴','英格蘭':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','克羅埃西亞':'🇭🇷','迦納':'🇬🇭','巴拿馬':'🇵🇦'};
+
+// 解析 "13:00 UTC-6" + date 成帶時區的 ISO 字串
+function ofParseKickoff(date, time) {
+  const m = (time||'').match(/(\d{1,2}):(\d{2})\s*UTC([+-])(\d{1,2})/);
+  if (!m) return `${date}T12:00:00+00:00`;
+  const hh = m[1].padStart(2,'0'), mm = m[2];
+  const sign = m[3], offHrs = m[4].padStart(2,'0');
+  return `${date}T${hh}:${mm}:00${sign}${offHrs}:00`;
+}
+
+// 將 openfootball 的 round 文字轉成我們的 stage 代碼
+function ofRoundToStage(round, num) {
+  if (/Round of 32/i.test(round)) return {stage:'LAST_32', round:null};
+  if (/Round of 16/i.test(round)) return {stage:'LAST_16', round:null};
+  if (/Quarter/i.test(round)) return {stage:'QUARTER_FINALS', round:null};
+  if (/Semi/i.test(round)) return {stage:'SEMI_FINALS', round:null};
+  if (/third place/i.test(round)) return {stage:'THIRD_PLACE', round:null};
+  if (/Final/i.test(round)) return {stage:'FINAL', round:null};
+  const md = (round||'').match(/Matchday (\d+)/i);
+  return {stage:'GROUP_STAGE', round: md?parseInt(md[1]):null};
+}
+
+// 抓取並轉換 openfootball 資料為 App 內部格式
+async function fetchOpenFootball() {
+  let raw = null;
+  try {
+    const res = await fetch(OF_URL, { cache:'no-store' });
+    if (res.ok) raw = await res.json();
+  } catch(e) {
+    // 直連失敗時走 CORS proxy 備援
+    try {
+      const res2 = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(OF_URL), { cache:'no-store' });
+      if (res2.ok) raw = await res2.json();
+    } catch(e2) { return null; }
+  }
+  if (!raw || !raw.matches) return null;
+
+  return raw.matches.map((mt, i) => {
+    const zh1 = OF_TEAM_ZH[mt.team1] || mt.team1;
+    const zh2 = OF_TEAM_ZH[mt.team2] || mt.team2;
+    const crest1 = TEAM_FLAG[zh1] || '🏳️';
+    const crest2 = TEAM_FLAG[zh2] || '🏳️';
+    const utcDate = ofParseKickoff(mt.date, mt.time);
+    const { stage, round } = ofRoundToStage(mt.round, mt.num);
+    const venue = OF_GROUND_ZH[mt.ground] || mt.ground || '';
+    const group = mt.group ? 'GROUP_' + mt.group.replace('Group ','') : null;
+
+    // 比分（若有 score.ft）
+    let finalScore = null;
+    if (mt.score && mt.score.ft && mt.score.ft.length === 2) {
+      finalScore = mt.score.ft;
+    }
+    const s = computeStatus(utcDate);
+    // 有最終比分 => 完賽；否則依時間判斷
+    let status = s.status, minute = s.minute;
+    if (finalScore) { status = 'FINISHED'; minute = null; }
+
+    let home=null, away=null, scorePending=false;
+    if (status === 'FINISHED') {
+      if (finalScore) { home=finalScore[0]; away=finalScore[1]; }
+      else scorePending = true;
+    } else if (status==='IN_PLAY' || status==='PAUSED') {
+      home = 0; away = 0; // openfootball 無即時比分，進行中暫顯 0-0
+    }
+
+    return {
+      id: 1000+i,
+      utcDate, venue, group, stage, round,
+      homeTeam:{name:zh1, crest:crest1},
+      awayTeam:{name:zh2, crest:crest2},
+      status, minute, scorePending,
+      score:{fullTime:{home, away}},
+      odds:{home:2.0, draw:3.2, away:3.5, prev:{home:2.0, draw:3.2, away:3.5}}
+    };
+  });
+}
+
+// ===== Football Data API（保留為次要選項）=====
 async function fetchFootballData(endpoint) {
   const key = state.apiKeys.football;
-  if (!key) return null; // 免費版也必須有金鑰才有 WC 權限
+  if (!key) return null;
   const url = 'https://api.football-data.org/v4/' + endpoint;
-  // 1) 直連嘗試
   try {
     const res = await fetch(url, { headers: { 'X-Auth-Token': key } });
     if (res.ok) return await res.json();
-  } catch(e) { /* CORS 或網路問題，改走 proxy */ }
-  // 2) CORS proxy 備援
+  } catch(e) {}
   try {
     const proxied = 'https://corsproxy.io/?url=' + encodeURIComponent(url);
     const res2 = await fetch(proxied, { headers: { 'X-Auth-Token': key } });
     if (res2.ok) return await res2.json();
-  } catch(e) { /* proxy 也失敗 */ }
+  } catch(e) {}
   return null;
 }
 
 // ===== MATCHES =====
 async function loadMatches() {
-  const container = document.getElementById('matchesList');
-  const data = await fetchFootballData('competitions/WC/matches?status=LIVE,IN_PLAY,PAUSED,SCHEDULED,TIMED&limit=50');
-  
-  if (data && data.matches && data.matches.length > 0) {
-    state.matches = data.matches;
+  // 優先順序：1) BALLDONTLIE 即時 API（需金鑰、秒級更新、全104場）
+  //          2) openfootball 自動抓取（免金鑰、約每日更新、全104場）
+  //          3) 內建備援
+  let matches = await fetchBalldontlie();
+  if (matches && matches.length > 0) {
+    state.matches = matches;
+    state.dataSource = 'balldontlie';
   } else {
-    // Demo data for 2026 World Cup
-    state.matches = getDemoMatches();
+    matches = await fetchOpenFootball();
+    if (matches && matches.length > 0) {
+      state.matches = matches;
+      state.dataSource = 'openfootball';
+    } else {
+      state.matches = getDemoMatches();
+      state.dataSource = 'demo';
+    }
   }
   renderMatches();
   updateSummaryStats();
+  updateDataSourceLabel();
+}
+
+function updateDataSourceLabel() {
+  const el = document.getElementById('dataSourceLabel');
+  if (!el) return;
+  const labels = {
+    'balldontlie':'🟢 即時更新（BALLDONTLIE 全104場·秒級）',
+    'openfootball':'📡 自動更新（openfootball 全104場·約每日）',
+    'football-data':'📡 football-data API',
+    'demo':'⚠️ 離線備援資料（填入金鑰可即時更新）'
+  };
+  el.textContent = labels[state.dataSource] || '';
 }
 
 function getDemoMatches() {
@@ -1211,7 +1432,7 @@ function getDemoMatches() {
       homeTeam:{name:'南韓', crest:'🇰🇷'}, awayTeam:{name:'捷克', crest:'🇨🇿'}, finalScore:[2,1], realStatus:'FINISHED',
       odds:{home:2.05, draw:3.3, away:3.5, prev:{home:2.05, draw:3.3, away:3.5}} },
     { id:3, utcDate:'2026-06-12T15:00:00-04:00', venue:'多倫多', group:'GROUP_B',
-      homeTeam:{name:'加拿大', crest:'🇨🇦'}, awayTeam:{name:'波士尼亞', crest:'🇧🇦'},
+      homeTeam:{name:'加拿大', crest:'🇨🇦'}, awayTeam:{name:'波士尼亞', crest:'🇧🇦'}, finalScore:[1,1], realStatus:'FINISHED',
       odds:{home:1.95, draw:3.4, away:4.0, prev:{home:1.95, draw:3.4, away:4.0}} },
     { id:4, utcDate:'2026-06-12T18:00:00-07:00', venue:'洛杉磯 SoFi', group:'GROUP_D',
       homeTeam:{name:'美國', crest:'🇺🇸'}, awayTeam:{name:'巴拉圭', crest:'🇵🇾'},
@@ -1289,10 +1510,11 @@ function getDemoMatches() {
         s = { status: m.realStatus, minute: m.realMinute ?? s.minute };
       }
     }
-    let home = null, away = null;
-    if (s.status === 'FINISHED' && (m.finalScore || m.liveScore)) {
-      const sc = m.finalScore || m.liveScore;
-      home = sc[0]; away = sc[1];
+    let home = null, away = null, scorePending = false;
+    if (s.status === 'FINISHED') {
+      if (m.finalScore) { home = m.finalScore[0]; away = m.finalScore[1]; }
+      else if (m.liveScore) { home = m.liveScore[0]; away = m.liveScore[1]; }
+      else { scorePending = true; } // 時間已過但無實際比分（demo 模式無 API 時）
     }
     else if ((s.status === 'IN_PLAY' || s.status === 'PAUSED')) {
       // 進行中：若有實際即時比分用之，否則 0-0 起跳
@@ -1300,7 +1522,7 @@ function getDemoMatches() {
       else if (m.finalScore) { home = m.finalScore[0]; away = m.finalScore[1]; }
       else { home = 0; away = 0; }
     }
-    return { ...m, stage:'GROUP_STAGE', status:s.status, minute:s.minute,
+    return { ...m, stage:'GROUP_STAGE', status:s.status, minute:s.minute, scorePending,
       score:{fullTime:{home, away}} };
   });
 }
@@ -1378,12 +1600,14 @@ function renderMatchCard(m) {
   const awayScore = m.score?.fullTime?.away;
   const scoreStr = (homeScore !== null && homeScore !== undefined)
     ? `<span class="score">${homeScore}</span><span class="score-sep">:</span><span class="score">${awayScore}</span>`
+    : m.scorePending
+    ? '<span style="font-size:11px;color:var(--amber)">比分<br>更新中</span>'
     : '<span style="font-size:13px;color:var(--text-muted)">VS</span>';
 
   const timeStr = isLive
     ? `<span class="match-time live-time">🔴 ${m.status==='PAUSED' ? '中場' : (m.minute || '?')+'′'}</span>`
     : isFinished
-    ? `<span class="match-time">完場 FT</span>`
+    ? `<span class="match-time">${m.scorePending ? '已完賽' : '完場 FT'}</span>`
     : `<span class="match-time">${fmtTW(m.utcDate)} 台灣</span>`;
 
   const homeFlag = m.homeTeam.crest || '🏳';
@@ -1693,7 +1917,14 @@ function analyzeMatch(id) {
 
 // ===== STANDINGS =====
 async function loadStandings() {
-  const container = document.getElementById('standingsList');
+  // 優先 BALLDONTLIE 即時積分榜
+  const bdl = await fetchBalldontlieStandings();
+  if (bdl && bdl.length > 0) {
+    state.standings = bdl;
+    renderStandings();
+    return;
+  }
+  // 次選 football-data API
   const data = await fetchFootballData('competitions/WC/standings');
   if (data && data.standings) {
     state.standings = data.standings;
@@ -1713,10 +1944,10 @@ function getDemoStandings() {
       { position:4, team:{name:'南非',crest:'🇿🇦'}, playedGames:1, won:0, draw:0, lost:1, goalsFor:0, goalsAgainst:2, goalDifference:-2, points:0, form:'L' },
     ]},
     { stage: 'GROUP_STAGE', group: 'GROUP_B', table: [
-      { position:1, team:{name:'加拿大',crest:'🇨🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
-      { position:2, team:{name:'瑞士',crest:'🇨🇭'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
-      { position:3, team:{name:'卡達',crest:'🇶🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
-      { position:4, team:{name:'波士尼亞',crest:'🇧🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:1, team:{name:'加拿大',crest:'🇨🇦'}, playedGames:1, won:0, draw:1, lost:0, goalsFor:1, goalsAgainst:1, goalDifference:0, points:1, form:'D' },
+      { position:2, team:{name:'波士尼亞',crest:'🇧🇦'}, playedGames:1, won:0, draw:1, lost:0, goalsFor:1, goalsAgainst:1, goalDifference:0, points:1, form:'D' },
+      { position:3, team:{name:'瑞士',crest:'🇨🇭'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
+      { position:4, team:{name:'卡達',crest:'🇶🇦'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
     ]},
     { stage: 'GROUP_STAGE', group: 'GROUP_C', table: [
       { position:1, team:{name:'巴西',crest:'🇧🇷'}, playedGames:0, won:0, draw:0, lost:0, goalsFor:0, goalsAgainst:0, goalDifference:0, points:0, form:'' },
@@ -1873,6 +2104,8 @@ function oddsCard(m, kind) {
     if (h > a) hitHome = true; else if (a > h) hitAway = true; else hitDraw = true;
     const r = hitHome ? '主勝' : hitAway ? '客勝' : '平局';
     resultBadge = `<span style="background:var(--green-dim);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">完場 ${h}-${a}（${r}）</span>`;
+  } else if (isFin && m.scorePending) {
+    resultBadge = `<span style="background:var(--amber);color:#000;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">已完賽 · 比分更新中</span>`;
   } else if (isLive) {
     resultBadge = `<span style="background:var(--red-bright);color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;">🔴 ${m.status==='PAUSED'?'中場':(m.minute||'')+'′'} ${h??0}-${a??0}</span>`;
   }
