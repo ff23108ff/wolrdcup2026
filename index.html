@@ -1203,12 +1203,14 @@ function showTab(tab) {
 // ===== Refresh =====
 async function refreshAll() {
   document.getElementById('refreshIcon').textContent = '⏳';
-  await loadMatches();          // 重新計算所有比賽狀態（含自動完賽判定）
-  // 依目前所在分頁，重新渲染對應內容，確保狀態變化即時反映
+  await loadMatches();          // 抓取最新比分並重算所有比賽狀態
+  // 比分更新後，同步重算積分榜（本地計算，與各列表比分一致）
+  await loadStandings();
+  // 依目前所在分頁，重新渲染對應內容，確保所有列表即時同步
   const activeTab = document.querySelector('.nav-btn.active')?.dataset.tab;
   if (activeTab === 'odds') renderOdds();
   if (activeTab === 'schedule') renderSchedule();
-  if (activeTab === 'standings') { await loadStandings(); }
+  if (activeTab === 'standings') renderStandings();
   if (activeTab === 'bracket') renderBracket();
   document.getElementById('refreshIcon').textContent = '↻';
   document.getElementById('lastUpdate').textContent = '更新於 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
@@ -1880,7 +1882,7 @@ function renderMatchCard(m) {
   const homeClick = homeHasSquad ? `onclick="event.stopPropagation();goToSquad('${m.homeTeam.name}')" style="cursor:pointer" title="查看 ${m.homeTeam.name} 球員名單"` : '';
   const awayClick = awayHasSquad ? `onclick="event.stopPropagation();goToSquad('${m.awayTeam.name}')" style="cursor:pointer" title="查看 ${m.awayTeam.name} 球員名單"` : '';
 
-  return `<div class="match-card ${isLive ? 'live' : ''}" onclick="analyzeMatch(${m.id})">
+  return `<div class="match-card ${isLive ? 'live' : ''}" onclick="analyzeMatch('${m.id}')">
     <div class="match-meta">
       <span class="match-stage">${stage}</span>
       ${timeStr}
@@ -1952,11 +1954,16 @@ function renderSchedule() {
       const isFin = m.status === 'FINISHED';
       const isLive = m.status === 'IN_PLAY' || m.status === 'PAUSED';
       const h = m.score?.fullTime?.home, a = m.score?.fullTime?.away;
-      const mid = (h !== null && h !== undefined)
+      const hasScore = h !== null && h !== undefined;
+      const mid = hasScore
         ? `<span class="sched-score">${h} - ${a}</span>`
+        : m.scorePending
+        ? `<span class="sched-vs" style="color:var(--amber)">更新中</span>`
         : `<span class="sched-vs">${fmtTW(m.utcDate).split(' ')[1] || ''}</span>`;
-      const badge = isLive ? `🔴 ${m.minute||''}′` : isFin ? '完場' : roundLabel(m.stage,m.round);
-      html += `<div class="sched-row" onclick="analyzeMatch(${m.id})">
+      const badge = isLive
+        ? `🔴 ${m.status==='PAUSED' ? '中場' : (m.minute||'')+'′'}`
+        : isFin ? '完場' : roundLabel(m.stage,m.round);
+      html += `<div class="sched-row" onclick="analyzeMatch('${m.id}')">
         <span class="sched-badge">${groupLabel(m.group)}</span>
         <div class="sched-teams">
           <span class="sched-side home">${m.homeTeam.crest} ${teamFull(m.homeTeam.name)}</span>
@@ -2153,14 +2160,22 @@ function analyzeMatch(id) {
 
 // ===== STANDINGS =====
 async function loadStandings() {
-  // 優先 BALLDONTLIE 即時積分榜
+  // 優先 BALLDONTLIE 即時積分榜（需金鑰）
   const bdl = await fetchBalldontlieStandings();
   if (bdl && bdl.length > 0) {
     state.standings = bdl;
     renderStandings();
     return;
   }
-  // 次選 football-data API
+  // 次選：直接從 state.matches 的完賽比分「即時計算」積分榜，
+  // 確保積分榜與即時賽事/賽程/賠率顯示的比分完全同步。
+  const computed = computeStandingsFromMatches();
+  if (computed && computed.length > 0) {
+    state.standings = computed;
+    renderStandings();
+    return;
+  }
+  // 再次選 football-data API
   const data = await fetchFootballData('competitions/WC/standings');
   if (data && data.standings) {
     state.standings = data.standings;
@@ -2169,6 +2184,74 @@ async function loadStandings() {
     state.standings = getDemoStandings();
     renderStandings();
   }
+}
+
+// 各隊所屬組別（用於從比賽結果計算積分榜）
+const TEAM_GROUP = {
+  '墨西哥':'A','南非':'A','南韓':'A','捷克':'A',
+  '加拿大':'B','瑞士':'B','卡達':'B','波士尼亞':'B',
+  '巴西':'C','摩洛哥':'C','蘇格蘭':'C','海地':'C',
+  '美國':'D','巴拉圭':'D','澳洲':'D','土耳其':'D',
+  '德國':'E','厄瓜多':'E','象牙海岸':'E','古拉索':'E',
+  '荷蘭':'F','日本':'F','突尼西亞':'F','瑞典':'F',
+  '比利時':'G','伊朗':'G','埃及':'G','紐西蘭':'G',
+  '西班牙':'H','維德角':'H','沙烏地阿拉伯':'H','烏拉圭':'H',
+  '法國':'I','塞內加爾':'I','伊拉克':'I','挪威':'I',
+  '阿根廷':'J','阿爾及利亞':'J','奧地利':'J','約旦':'J',
+  '葡萄牙':'K','剛果民主共和國':'K','烏茲別克':'K','哥倫比亞':'K',
+  '英格蘭':'L','克羅埃西亞':'L','迦納':'L','巴拿馬':'L',
+};
+
+// 從 state.matches 的完賽結果即時計算 12 組積分榜
+function computeStandingsFromMatches() {
+  if (!state.matches || !state.matches.length) return null;
+  // 初始化每組每隊
+  const stats = {}; // name -> {p,w,d,l,gf,ga,pts,form:[]}
+  Object.keys(TEAM_GROUP).forEach(name => {
+    stats[name] = { name, group:TEAM_GROUP[name], p:0,w:0,d:0,l:0,gf:0,ga:0,pts:0, form:[] };
+  });
+  // 只統計小組賽且已完賽、有比分的場次
+  const finished = state.matches.filter(m =>
+    m.status === 'FINISHED' &&
+    m.score?.fullTime?.home !== null && m.score?.fullTime?.home !== undefined &&
+    (m.stage === 'GROUP_STAGE' || !m.stage) &&
+    TEAM_GROUP[m.homeTeam.name] && TEAM_GROUP[m.awayTeam.name] &&
+    TEAM_GROUP[m.homeTeam.name] === TEAM_GROUP[m.awayTeam.name]
+  );
+  if (!finished.length) return null;
+
+  finished.forEach(m => {
+    const hn = m.homeTeam.name, an = m.awayTeam.name;
+    const hs = m.score.fullTime.home, as = m.score.fullTime.away;
+    const H = stats[hn], A = stats[an];
+    if (!H || !A) return;
+    H.p++; A.p++;
+    H.gf += hs; H.ga += as; A.gf += as; A.ga += hs;
+    if (hs > as) { H.w++; H.pts+=3; H.form.push('W'); A.l++; A.form.push('L'); }
+    else if (as > hs) { A.w++; A.pts+=3; A.form.push('W'); H.l++; H.form.push('L'); }
+    else { H.d++; A.d++; H.pts++; A.pts++; H.form.push('D'); A.form.push('D'); }
+  });
+
+  // 分組排序：積分 > 淨勝球 > 進球
+  const groups = {};
+  Object.values(stats).forEach(s => {
+    (groups[s.group] = groups[s.group] || []).push(s);
+  });
+  return Object.keys(groups).sort().map(g => {
+    const rows = groups[g].sort((a,b) =>
+      b.pts - a.pts || (b.gf-b.ga)-(a.gf-a.ga) || b.gf - a.gf || a.name.localeCompare(b.name)
+    );
+    return {
+      stage:'GROUP_STAGE', group:'GROUP_'+g,
+      table: rows.map((s,i) => ({
+        position:i+1,
+        team:{ name:s.name, crest:TEAM_FLAG[s.name]||'🏳️' },
+        playedGames:s.p, won:s.w, draw:s.d, lost:s.l,
+        goalsFor:s.gf, goalsAgainst:s.ga, goalDifference:s.gf-s.ga,
+        points:s.pts, form:s.form.join('')
+      }))
+    };
+  });
 }
 
 function getDemoStandings() {
