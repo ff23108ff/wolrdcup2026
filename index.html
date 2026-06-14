@@ -1232,6 +1232,94 @@ function bdlMapStatus(apiStatus, datetime) {
   return 'SCHEDULED';
 }
 
+// ===== 自動抓取：ESPN 隱藏 API（免金鑰、真正即時、含進行中比分）=====
+// 端點：site.api.espn.com/.../soccer/fifa.world/scoreboard?dates=YYYYMMDD
+const ESPN_TEAM_ZH = {'Mexico':'墨西哥','South Africa':'南非','South Korea':'南韓','Czechia':'捷克','Czech Republic':'捷克','Canada':'加拿大','Switzerland':'瑞士','Qatar':'卡達','Bosnia & Herzegovina':'波士尼亞','Bosnia and Herzegovina':'波士尼亞','Brazil':'巴西','Morocco':'摩洛哥','Scotland':'蘇格蘭','Haiti':'海地','United States':'美國','USA':'美國','Paraguay':'巴拉圭','Australia':'澳洲','Turkey':'土耳其','Türkiye':'土耳其','Germany':'德國','Curaçao':'古拉索','Curacao':'古拉索','Ivory Coast':'象牙海岸',"Côte d'Ivoire":'象牙海岸','Ecuador':'厄瓜多','Netherlands':'荷蘭','Japan':'日本','Tunisia':'突尼西亞','Sweden':'瑞典','Belgium':'比利時','Iran':'伊朗','IR Iran':'伊朗','Egypt':'埃及','New Zealand':'紐西蘭','Spain':'西班牙','Cape Verde':'維德角','Cabo Verde':'維德角','Saudi Arabia':'沙烏地阿拉伯','Uruguay':'烏拉圭','France':'法國','Senegal':'塞內加爾','Iraq':'伊拉克','Norway':'挪威','Argentina':'阿根廷','Algeria':'阿爾及利亞','Austria':'奧地利','Jordan':'約旦','Portugal':'葡萄牙','DR Congo':'剛果民主共和國','Congo DR':'剛果民主共和國','Uzbekistan':'烏茲別克','Colombia':'哥倫比亞','England':'英格蘭','Croatia':'克羅埃西亞','Ghana':'迦納','Panama':'巴拿馬'};
+
+function espnMapStatus(st) {
+  if (st === 'post') return 'FINISHED';
+  if (st === 'in') return 'IN_PLAY';
+  return 'SCHEDULED';
+}
+
+async function fetchESPN() {
+  const BASE = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard';
+  const now = new Date();
+  const fmt = (dt) => {
+    const y = dt.getUTCFullYear(), m = String(dt.getUTCMonth()+1).padStart(2,'0'), d = String(dt.getUTCDate()).padStart(2,'0');
+    return `${y}${m}${d}`;
+  };
+  // 抓今天(UTC)前後各 1 天，確保涵蓋跨日賽事與即時/剛完賽
+  const targetDays = [];
+  for (let off = -1; off <= 1; off++) {
+    targetDays.push(fmt(new Date(now.getTime() + off*86400000)));
+  }
+
+  let events = [];
+  try {
+    for (const day of targetDays) {
+      const res = await fetch(`${BASE}?dates=${day}`, { cache:'no-store' });
+      if (!res.ok) continue;
+      const json = await res.json();
+      if (json.events) events = events.concat(json.events);
+    }
+  } catch(e) {
+    try {
+      for (const day of targetDays) {
+        const res = await fetch('https://corsproxy.io/?url=' + encodeURIComponent(`${BASE}?dates=${day}`), { cache:'no-store' });
+        if (!res.ok) continue;
+        const json = await res.json();
+        if (json.events) events = events.concat(json.events);
+      }
+    } catch(e2) { return null; }
+  }
+  if (!events.length) return null;
+
+  const seen = {};
+  const out = [];
+  events.forEach(ev => {
+    if (seen[ev.id]) return;
+    seen[ev.id] = 1;
+    const comp = ev.competitions && ev.competitions[0];
+    if (!comp) return;
+    const cs = comp.competitors || [];
+    const homeC = cs.find(c => c.homeAway === 'home') || cs[0];
+    const awayC = cs.find(c => c.homeAway === 'away') || cs[1];
+    if (!homeC || !awayC) return;
+
+    const zhHome = ESPN_TEAM_ZH[homeC.team.name] || ESPN_TEAM_ZH[homeC.team.displayName] || homeC.team.name;
+    const zhAway = ESPN_TEAM_ZH[awayC.team.name] || ESPN_TEAM_ZH[awayC.team.displayName] || awayC.team.name;
+    const stState = comp.status && comp.status.type && comp.status.type.state;
+    const status = espnMapStatus(stState);
+
+    let home=null, away=null, scorePending=false;
+    if (status === 'FINISHED' || status === 'IN_PLAY') {
+      const hs = parseInt(homeC.score), as = parseInt(awayC.score);
+      if (!isNaN(hs) && !isNaN(as)) { home = hs; away = as; }
+      else if (status === 'FINISHED') scorePending = true;
+      else { home = 0; away = 0; }
+    }
+    let minute = null;
+    if (status === 'IN_PLAY' && comp.status) {
+      const mn = parseInt((comp.status.displayClock || '').replace("'", ''));
+      if (!isNaN(mn)) minute = mn;
+    }
+
+    out.push({
+      id: 'espn'+ev.id,
+      utcDate: ev.date,
+      venue: (comp.venue && comp.venue.address && comp.venue.address.city) ? (OF_GROUND_ZH[comp.venue.address.city] || comp.venue.address.city) : (comp.venue ? comp.venue.fullName : ''),
+      group: null, stage:'GROUP_STAGE', round:null,
+      homeTeam:{name:zhHome, crest:TEAM_FLAG[zhHome] || '🏳️'},
+      awayTeam:{name:zhAway, crest:TEAM_FLAG[zhAway] || '🏳️'},
+      status, minute, scorePending,
+      score:{fullTime:{home, away}},
+      odds:{home:2.0, draw:3.2, away:3.5, prev:{home:2.0, draw:3.2, away:3.5}}
+    });
+  });
+  return out.length ? out : null;
+}
+
 async function fetchBalldontlie() {
   const key = state.apiKeys.balldontlie;
   if (!key) return null;
@@ -1387,9 +1475,11 @@ async function fetchOpenFootball() {
     let home=null, away=null, scorePending=false;
     if (status === 'FINISHED') {
       if (finalScore) { home=finalScore[0]; away=finalScore[1]; }
-      else scorePending = true;
+      else scorePending = true; // openfootball 完賽但尚未填比分
     } else if (status==='IN_PLAY' || status==='PAUSED') {
-      home = 0; away = 0; // openfootball 無即時比分，進行中暫顯 0-0
+      // openfootball 不提供即時比分。若有比分(極少數)用之，否則標記為「比分待更新」而非誤導的 0-0
+      if (finalScore) { home=finalScore[0]; away=finalScore[1]; }
+      else { scorePending = true; }
     }
 
     return {
@@ -1423,26 +1513,86 @@ async function fetchFootballData(endpoint) {
 
 // ===== MATCHES =====
 async function loadMatches() {
-  // 優先順序：1) BALLDONTLIE 即時 API（需金鑰、秒級更新、全104場）
-  //          2) openfootball 自動抓取（免金鑰、約每日更新、全104場）
-  //          3) 內建備援
+  // 策略（全部免金鑰）：
+  //  1) 先取得「完整 104 場賽程骨架」：openfootball（免金鑰）→ 失敗則用內建備援
+  //  2) 再用 ESPN 即時 API（免金鑰、真正即時）把進行中/剛完賽的「即時比分」疊加上去
+  //  3) BALLDONTLIE（需金鑰）若有設定，視為最高優先的完整即時來源
+  let usedSource = 'demo';
+
+  // 先試 BALLDONTLIE（付費/試用，全104場即時）
   let matches = await fetchBalldontlie();
   if (matches && matches.length > 0) {
     state.matches = matches;
     state.dataSource = 'balldontlie';
-  } else {
-    matches = await fetchOpenFootball();
-    if (matches && matches.length > 0) {
-      state.matches = matches;
-      state.dataSource = 'openfootball';
-    } else {
-      state.matches = getDemoMatches();
-      state.dataSource = 'demo';
-    }
+    renderMatches(); updateSummaryStats(); updateDataSourceLabel();
+    return;
   }
+
+  // 取得完整賽程骨架
+  let skeleton = await fetchOpenFootball();
+  if (skeleton && skeleton.length > 0) {
+    skeleton = mergeKnownScores(skeleton);
+    usedSource = 'openfootball';
+  } else {
+    skeleton = getDemoMatches();
+    usedSource = 'demo';
+  }
+
+  // 用 ESPN 即時比分疊加（免金鑰）
+  const espn = await fetchESPN();
+  if (espn && espn.length > 0) {
+    skeleton = overlayEspnScores(skeleton, espn);
+    usedSource = 'espn';  // 有成功疊加即時比分
+  }
+
+  state.matches = skeleton;
+  state.dataSource = usedSource;
   renderMatches();
   updateSummaryStats();
   updateDataSourceLabel();
+}
+
+// 把 ESPN 的即時比分/狀態疊加到完整賽程骨架上（依雙方隊名比對）
+function overlayEspnScores(skeleton, espn) {
+  const liveMap = {};
+  espn.forEach(e => {
+    liveMap[e.homeTeam.name + '|' + e.awayTeam.name] = e;
+  });
+  return skeleton.map(m => {
+    const live = liveMap[m.homeTeam.name + '|' + m.awayTeam.name];
+    if (!live) return m;
+    // ESPN 有這場的即時資料 → 用 ESPN 的狀態與比分覆蓋
+    return {
+      ...m,
+      status: live.status,
+      minute: live.minute,
+      scorePending: live.scorePending,
+      score: live.score,
+    };
+  });
+}
+
+// 用內建已知賽果補上 openfootball 缺少的比分（依雙方隊名比對）
+function mergeKnownScores(matches) {
+  const demo = getDemoMatches();
+  const scoreMap = {};
+  demo.forEach(d => {
+    if (d.score && d.score.fullTime && d.score.fullTime.home !== null && d.score.fullTime.home !== undefined) {
+      const key = d.homeTeam.name + '|' + d.awayTeam.name;
+      scoreMap[key] = [d.score.fullTime.home, d.score.fullTime.away];
+    }
+  });
+  return matches.map(m => {
+    const key = m.homeTeam.name + '|' + m.awayTeam.name;
+    const known = scoreMap[key];
+    // 只有當這場「沒有比分」但「我們有已知賽果」時才補上
+    const noScore = !m.score || m.score.fullTime.home === null || m.score.fullTime.home === undefined;
+    if (known && noScore) {
+      return { ...m, status:'FINISHED', minute:null, scorePending:false,
+        score:{ fullTime:{ home:known[0], away:known[1] } } };
+    }
+    return m;
+  });
 }
 
 // 各資料源的顯示設定
@@ -1451,10 +1601,14 @@ const SOURCE_META = {
     title:'BALLDONTLIE 即時資料',
     freq:'秒級即時更新',
     desc:'涵蓋全部 104 場，比賽進行中比分自動刷新。按「重新整理」會立即抓取當下最新比分。' },
-  openfootball: { pill:'📡 自動', cls:'auto',
-    title:'openfootball 公開資料',
-    freq:'約每日更新一次',
-    desc:'免金鑰自動抓取，涵蓋全部 104 場。資料源約每日才更新，因此短時間內重複按「重新整理」可能抓到同一份；強制不使用快取，但更新快慢取決於來源端。' },
+  espn: { pill:'🟢 即時', cls:'live',
+    title:'ESPN 即時比分（免金鑰）',
+    freq:'即時更新·免金鑰',
+    desc:'完整賽程由 openfootball 提供，進行中與剛完賽的比分由 ESPN 官方 API 即時疊加，完全免金鑰。按「重新整理」會立即抓取 ESPN 當下最新比分與比賽分鐘數。少數情況 ESPN 跨網域請求被瀏覽器擋下時，會自動切換 proxy 中繼。' },
+  openfootball: { pill:'📡 賽程', cls:'auto',
+    title:'openfootball 賽程資料',
+    freq:'賽程完整·比分延遲',
+    desc:'免金鑰自動抓取全部 104 場賽程。ESPN 即時比分暫時連不上時，完賽比分改用內建已知賽果疊加，其餘顯示「比分更新中」。' },
   'football-data': { pill:'📡 API', cls:'auto',
     title:'football-data.org API',
     freq:'依方案而定',
@@ -1462,7 +1616,7 @@ const SOURCE_META = {
   demo: { pill:'⚠️ 備援', cls:'demo',
     title:'離線備援資料',
     freq:'不會自動更新',
-    desc:'目前未連上任何線上資料源（可能是網路或來源端問題）。顯示的是內建備援資料。填入 BALLDONTLIE 金鑰，或稍後再按「重新整理」嘗試重新連線。' },
+    desc:'目前未連上任何線上資料源（可能是網路或來源端問題）。顯示的是內建備援資料。稍後再按「重新整理」會自動重試 ESPN 即時來源。' },
 };
 
 function updateDataSourceLabel() {
@@ -1472,9 +1626,10 @@ function updateDataSourceLabel() {
   if (el) {
     const labels = {
       'balldontlie':'🟢 即時更新（BALLDONTLIE 全104場·秒級）',
-      'openfootball':'📡 自動更新（openfootball 全104場·約每日）',
+      'espn':'🟢 即時更新（ESPN 比分·免金鑰）',
+      'openfootball':'📡 賽程已載入（ESPN 即時比分連線中…）',
       'football-data':'📡 football-data API',
-      'demo':'⚠️ 離線備援資料（填入金鑰可即時更新）'
+      'demo':'⚠️ 離線備援資料（稍後自動重試 ESPN 即時來源）'
     };
     el.textContent = labels[state.dataSource] || '';
   }
