@@ -122,6 +122,9 @@
   .last-update {
     font-size: 11px;
     color: var(--text-muted);
+    text-align: right;
+    line-height: 1.3;
+    max-width: 180px;
   }
   .refresh-wrap { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
   .source-pill {
@@ -1213,7 +1216,7 @@ async function refreshAll() {
   if (activeTab === 'standings') renderStandings();
   if (activeTab === 'bracket') renderBracket();
   document.getElementById('refreshIcon').textContent = '↻';
-  document.getElementById('lastUpdate').textContent = '更新於 ' + new Date().toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  updateLastUpdateLabel();  // 時間戳同步顯示 ESPN 來源與抓取結果
 }
 
 function updateRefreshInterval() {
@@ -1526,6 +1529,7 @@ async function loadMatches() {
   if (matches && matches.length > 0) {
     state.matches = matches;
     state.dataSource = 'balldontlie';
+    state.lastFetch = { source:'balldontlie', time:new Date(), live:matches.filter(m=>m.status==='IN_PLAY'||m.status==='PAUSED').length, ok:true };
     renderMatches(); updateSummaryStats(); updateDataSourceLabel();
     return;
   }
@@ -1542,13 +1546,24 @@ async function loadMatches() {
 
   // 用 ESPN 即時比分疊加（免金鑰）
   const espn = await fetchESPN();
+  let espnOk = false;
   if (espn && espn.length > 0) {
     skeleton = overlayEspnScores(skeleton, espn);
     usedSource = 'espn';  // 有成功疊加即時比分
+    espnOk = true;
   }
 
   state.matches = skeleton;
   state.dataSource = usedSource;
+  // 記錄本次抓取資訊（供更新時間戳顯示）
+  state.lastFetch = {
+    source: usedSource,
+    time: new Date(),
+    ok: espnOk || usedSource === 'openfootball',
+    live: skeleton.filter(m=>m.status==='IN_PLAY'||m.status==='PAUSED').length,
+    finished: skeleton.filter(m=>m.status==='FINISHED').length,
+    espnCount: espn ? espn.length : 0,
+  };
   renderMatches();
   updateSummaryStats();
   updateDataSourceLabel();
@@ -1642,6 +1657,30 @@ function updateDataSourceLabel() {
     pill.className = 'source-pill ' + meta.cls;
     pill.setAttribute('title', '點擊看資料源說明');
   }
+  updateLastUpdateLabel();
+}
+
+// 更新時間戳：顯示「資料來源 + 抓取時間 + 即時/完賽場數」，反映 ESPN 實際狀態
+function updateLastUpdateLabel() {
+  const el = document.getElementById('lastUpdate');
+  if (!el) return;
+  const f = state.lastFetch;
+  const timeStr = (f && f.time ? f.time : new Date()).toLocaleTimeString('zh-TW', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const srcShort = {
+    balldontlie:'BALLDONTLIE',
+    espn:'ESPN 即時',
+    openfootball:'openfootball 賽程',
+    'football-data':'football-data',
+    demo:'離線備援'
+  }[state.dataSource] || '資料';
+  let extra = '';
+  if (f && (f.live || f.finished)) {
+    const bits = [];
+    if (f.live) bits.push(`🔴${f.live} 進行中`);
+    if (f.finished) bits.push(`✅${f.finished} 完賽`);
+    extra = '　' + bits.join('・');
+  }
+  el.textContent = `${srcShort} · 更新於 ${timeStr}${extra}`;
 }
 
 // 點膠囊展開／收合資料源說明卡
@@ -4333,9 +4372,9 @@ function askPlayerAnalysis(teamName, name, en) {
 }
 
 // ===== INIT =====
-loadMatches();
+document.getElementById('lastUpdate').textContent = '連線 ESPN 中…';
+loadMatches();   // 完成後會自動透過 updateLastUpdateLabel 顯示來源與時間
 updateRefreshInterval();
-document.getElementById('lastUpdate').textContent = '更新於 ' + new Date().toLocaleTimeString('zh-TW',{hour:'2-digit',minute:'2-digit'});
 </script>
 </body>
 </html>
