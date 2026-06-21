@@ -817,6 +817,52 @@
     border-top: 1px solid var(--pitch-border); padding-top: 0.6rem;
   }
 
+  /* 球隊本屆賽程戰績卡 */
+  .tf-card {
+    background: var(--pitch-card); border: 1px solid var(--pitch-border);
+    border-radius: 12px; padding: 1rem 1.1rem; margin-bottom: 1rem;
+  }
+  .tf-title { font-size: 13px; font-weight: 700; color: var(--gold); margin-bottom: 0.6rem; }
+  .tf-summary {
+    font-size: 12px; color: var(--text-secondary);
+    background: var(--pitch-surface); border-radius: 8px;
+    padding: 8px 10px; margin-bottom: 0.75rem;
+  }
+  .tf-row {
+    padding: 8px 10px; border-radius: 8px; margin-bottom: 6px;
+    background: var(--pitch-surface); border-left: 3px solid var(--pitch-border);
+    cursor: pointer; transition: background 0.15s;
+  }
+  .tf-row:hover { background: #1a2e1d; }
+  .tf-win-row { border-left-color: var(--green-bright); }
+  .tf-loss-row { border-left-color: var(--red-bright); }
+  .tf-draw-row { border-left-color: var(--text-muted); }
+  .tf-round {
+    font-size: 10px; color: var(--text-muted);
+    display: flex; justify-content: space-between; margin-bottom: 4px;
+  }
+  .tf-date { color: var(--text-muted); }
+  .tf-match {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--text-primary);
+  }
+  .tf-opp { flex: 1; }
+  .tf-score { font-weight: 700; color: var(--gold); font-size: 14px; }
+  .tf-score-pending { font-size: 11px; color: var(--amber); }
+  .tf-vs-time { font-size: 11px; color: var(--text-muted); }
+  .tf-res { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 4px; flex-shrink: 0; }
+  .tf-win { background: var(--green-dim); color: #fff; }
+  .tf-loss { background: #5a1a1a; color: #fff; }
+  .tf-draw { background: var(--pitch-border); color: var(--text-secondary); }
+  .tf-live { background: var(--red-bright); color: #fff; }
+  .tf-upcoming { background: transparent; color: var(--text-muted); border: 1px solid var(--pitch-border); }
+  .tf-pending { background: var(--amber); color: #000; }
+  .tf-events {
+    font-size: 11px; color: var(--text-secondary);
+    margin-top: 5px; padding-top: 5px;
+    border-top: 1px dashed var(--pitch-border); line-height: 1.5;
+  }
+
   .pos-section-label {
     font-size: 11px; font-weight: 700;
     color: var(--text-muted); text-transform: uppercase;
@@ -1279,6 +1325,7 @@ const state = {
   matches: [],
   standings: [],
   injuries: [],
+  injurySource: 'demo',
   odds: [],
   matchFilter: 'all',
   injuryFilter: 'all',
@@ -1319,7 +1366,7 @@ function showTab(tab) {
   if (tab === 'matches' && state.matches.length === 0) loadMatches();
   if (tab === 'standings') loadStandings();   // 每次進入都重算，反映最新比分
   if (tab === 'odds') loadOdds();
-  if (tab === 'injuries' && state.injuries.length === 0) loadInjuries();
+  if (tab === 'injuries') loadInjuries();
   if (tab === 'squads' && !document.querySelector('.team-select-btn')) initSquads();
   if (tab === 'schedule') renderSchedule();
   if (tab === 'bracket') { loadStandings().then(() => renderBracket()); }
@@ -1337,6 +1384,7 @@ async function refreshAll() {
   if (activeTab === 'schedule') renderSchedule();
   if (activeTab === 'standings') renderStandings();
   if (activeTab === 'bracket') renderBracket();
+  if (activeTab === 'squads' && typeof currentTeam !== 'undefined' && currentTeam) renderSquad(currentTeam);
   document.getElementById('refreshIcon').textContent = '↻';
   updateLastUpdateLabel();  // 時間戳同步顯示 ESPN 來源與抓取結果
 }
@@ -1592,7 +1640,7 @@ async function buildLiveRankings() {
 
 // 從 state.matches 各場的 events 累加出排行榜（單一真實來源）
 function aggregateRankingsFromEvents() {
-  const goals = {}, assists = {}, yellows = {}, reds = {};
+  const goals = {}, assists = {}, yellows = {}, reds = {}, owns = {};
   const teamOf = {};
   let gotAny = false;
 
@@ -1602,7 +1650,8 @@ function aggregateRankingsFromEvents() {
       if (!e.player) return;
       gotAny = true;
       if (e.team) teamOf[e.player] = e.team;
-      if (e.type === 'goal' && !e.own) goals[e.player] = (goals[e.player]||0)+1;  // 烏龍不計個人進球
+      if (e.type === 'goal' && e.own) owns[e.player] = (owns[e.player]||0)+1;       // 烏龍球榜
+      else if (e.type === 'goal') goals[e.player] = (goals[e.player]||0)+1;          // 正常進球
       else if (e.type === 'yellow') yellows[e.player] = (yellows[e.player]||0)+1;
       else if (e.type === 'red') reds[e.player] = (reds[e.player]||0)+1;
     });
@@ -1637,6 +1686,7 @@ function aggregateRankingsFromEvents() {
   TOURNAMENT_RANKINGS.scorers = Object.keys(goals).length ? toRows(goals, ' 球') : [];
   TOURNAMENT_RANKINGS.assists = Object.keys(assists).length ? toRows(assists, ' 助攻') : [];
   TOURNAMENT_RANKINGS.cards = cardRows;
+  TOURNAMENT_RANKINGS.owngoals = Object.keys(owns).length ? toRows(owns, ' 烏龍') : [];
   TOURNAMENT_RANKINGS._live = true;
   statsCache.computedAt = Date.now();
   return true;
@@ -1745,6 +1795,7 @@ const TOURNAMENT_RANKINGS = {
   scorers: [],
   assists: [],
   cards: [],
+  owngoals: [],
 };
 
 // 解析 "13:00 UTC-6" + date 成帶時區的 ISO 字串
@@ -1902,6 +1953,7 @@ async function loadMatches() {
         renderMatches();   // 比賽事件已附上，重繪賽事卡顯示進球/紅黃牌
         const activeTab = document.querySelector('.nav-btn.active')?.dataset.tab;
         if (activeTab === 'schedule') renderSchedule();
+        if (activeTab === 'squads' && typeof currentTeam !== 'undefined' && currentTeam) renderSquad(currentTeam);
       }
     }).catch(()=>{});
   }
@@ -2254,6 +2306,7 @@ function renderRankingsPanel() {
     { key:'scorers', label:'⚽ 進球榜' },
     { key:'assists', label:'🎯 助攻榜' },
     { key:'cards', label:'🟨 紅黃牌' },
+    { key:'owngoals', label:'🥅 烏龍球' },
   ];
   let html = `<div class="rank-tabs">` +
     tabs.map(t => `<span class="rank-tab ${rankingTab===t.key?'active':''}" onclick="setRankingTab('${t.key}')">${t.label}</span>`).join('') +
@@ -2270,7 +2323,10 @@ function renderRankingsPanel() {
       </div>`;
     }).join('');
   } else {
-    html += `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:1rem 0;">小組賽開打後更新</div>`;
+    const emptyMsg = rankingTab==='owngoals' ? '目前尚無烏龍球' :
+                     rankingTab==='assists' ? '尚無助攻紀錄' :
+                     rankingTab==='cards' ? '尚無紅黃牌' : '小組賽開打後更新';
+    html += `<div style="font-size:12px;color:var(--text-muted);text-align:center;padding:1rem 0;">${emptyMsg}</div>`;
   }
   // 資料來源標註
   if (TOURNAMENT_RANKINGS._live) {
@@ -3046,8 +3102,63 @@ function askOddsAnalysis(home, away, h, d, a) {
 }
 
 // ===== INJURIES =====
+// 嘗試從 ESPN 抓取各隊傷兵；ESPN soccer 傷兵資料常較稀疏，抓不到則用內建精選資料。
+const ESPN_INJURY_URL = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/injuries';
+
+async function fetchEspnInjuries() {
+  let json = null;
+  const urls = [
+    ESPN_INJURY_URL,
+    'https://corsproxy.io/?url=' + encodeURIComponent(ESPN_INJURY_URL),
+    'https://api.allorigins.win/raw?url=' + encodeURIComponent(ESPN_INJURY_URL),
+  ];
+  for (const u of urls) {
+    try {
+      const res = await fetch(u, { cache:'no-store' });
+      if (res.ok) { json = await res.json(); break; }
+    } catch(e) {}
+  }
+  if (!json || !json.injuries) return null;
+
+  // ESPN injuries 結構：injuries[].injuries[] 內含 athlete + status + details
+  const out = [];
+  const statusMap = (s) => {
+    s = (s||'').toLowerCase();
+    if (/out|injured reserve|suspend/.test(s)) return 'out';
+    if (/doubt|question|day-to-day|game-time/.test(s)) return 'doubt';
+    if (/return|active|probable/.test(s)) return 'return';
+    return 'doubt';
+  };
+  (json.injuries || []).forEach(teamBlock => {
+    const teamEn = teamBlock.team && (teamBlock.team.displayName || teamBlock.team.name);
+    const teamZh = ESPN_TEAM_ZH[teamEn] || teamEn || '';
+    const flag = TEAM_FLAG[teamZh] || '';
+    (teamBlock.injuries || []).forEach(inj => {
+      const ath = inj.athlete || {};
+      const type = inj.type || inj.details || {};
+      out.push({
+        name:'', player: zhPlayerName(ath.displayName || ath.shortName || '') || (ath.displayName||''),
+        team: teamZh + flag, position: (ath.position && (ath.position.abbreviation||ath.position.name)) || '',
+        status: statusMap(inj.status || (type && type.description)),
+        injury: (type && (type.description || type.text)) || inj.shortComment || '傷病',
+        description: inj.longComment || inj.shortComment || '',
+        returnDate: inj.details && inj.details.returnDate ? inj.details.returnDate : '',
+        avatar: flag || '🏥'
+      });
+    });
+  });
+  return out.length ? out : null;
+}
+
 async function loadInjuries() {
-  state.injuries = getDemoInjuries();
+  const espn = await fetchEspnInjuries();
+  if (espn && espn.length) {
+    state.injuries = espn;
+    state.injurySource = 'espn';
+  } else {
+    state.injuries = getDemoInjuries();
+    state.injurySource = 'demo';
+  }
   renderInjuries();
 }
 
@@ -3098,7 +3209,10 @@ function renderInjuries() {
       </div>
     </div>`;
   }).join('');
-  document.getElementById('injuriesList').innerHTML = html || '<div class="loading-card">暫無符合條件的傷兵資料</div>';
+  const srcNote = state.injurySource === 'espn'
+    ? '<div style="font-size:11px;color:var(--green-bright);text-align:center;margin-bottom:0.75rem;">🟢 ESPN 即時傷兵資料</div>'
+    : '<div style="font-size:11px;color:var(--text-muted);text-align:center;margin-bottom:0.75rem;">📋 精選傷兵資料（ESPN 即時資料暫時無法取得）</div>';
+  document.getElementById('injuriesList').innerHTML = (html ? srcNote : '') + (html || '<div class="loading-card">暫無符合條件的傷兵資料</div>');
 }
 
 // ===== AI CHAT =====
@@ -4687,6 +4801,88 @@ function selectTeam(team, btn) {
   renderSquad(team);
 }
 
+// 渲染某隊本屆所有比賽（每輪每場：賽程、比分、勝負、進球/紅黃牌）
+function renderTeamFixtures(teamName) {
+  const all = (state.matches || [])
+    .filter(m => m.homeTeam.name === teamName || m.awayTeam.name === teamName)
+    .sort((a,b) => new Date(a.utcDate) - new Date(b.utcDate));
+
+  if (!all.length) {
+    return `<div class="tf-card"><div class="tf-title">📅 本屆賽程戰績</div>
+      <div style="font-size:12px;color:var(--text-muted);padding:0.5rem 0;">賽程載入中或尚未開始…</div></div>`;
+  }
+
+  // 統計戰績
+  let w=0,d=0,l=0,gf=0,ga=0;
+  const rows = all.map(m => {
+    const isHome = m.homeTeam.name === teamName;
+    const opp = isHome ? m.awayTeam : m.homeTeam;
+    const h = m.score?.fullTime?.home, a = m.score?.fullTime?.away;
+    const hasScore = h !== null && h !== undefined;
+    const myScore = isHome ? h : a, oppScore = isHome ? a : h;
+
+    let resultBadge = '', rowCls = '';
+    if (m.status === 'FINISHED' && hasScore) {
+      if (myScore > oppScore) { w++; resultBadge = '<span class="tf-res tf-win">勝</span>'; rowCls='tf-win-row'; }
+      else if (myScore < oppScore) { l++; resultBadge = '<span class="tf-res tf-loss">負</span>'; rowCls='tf-loss-row'; }
+      else { d++; resultBadge = '<span class="tf-res tf-draw">和</span>'; rowCls='tf-draw-row'; }
+      gf += myScore; ga += oppScore;
+    } else if (m.status === 'IN_PLAY' || m.status === 'PAUSED') {
+      resultBadge = `<span class="tf-res tf-live">🔴 ${m.status==='PAUSED'?'中場':(m.minute||'')+"'"}</span>`;
+    } else if (m.status === 'FINISHED' && m.scorePending) {
+      resultBadge = '<span class="tf-res tf-pending">完賽</span>';
+    } else {
+      resultBadge = '<span class="tf-res tf-upcoming">未賽</span>';
+    }
+
+    // 比分顯示（以該隊視角：我方-對方）
+    let scoreDisp;
+    if (hasScore) scoreDisp = `<span class="tf-score">${myScore} - ${oppScore}</span>`;
+    else if (m.scorePending) scoreDisp = '<span class="tf-score-pending">待更新</span>';
+    else scoreDisp = `<span class="tf-vs-time">${fmtTW(m.utcDate).split(' ')[1]||''}</span>`;
+
+    // 本隊在這場的進球/紅黃牌（從事件中過濾）
+    let myEvents = '';
+    if (m.events && m.events.length) {
+      const mine = m.events.filter(e => {
+        // 烏龍球算對方，其餘看 e.team
+        if (e.own) return e.team !== teamName;  // 對方烏龍 = 我方得分相關，但記在對方；此處顯示我隊球員事件
+        return e.team === teamName;
+      });
+      const evStrs = mine.map(e => {
+        const icon = e.type==='goal' ? (e.pen?'⚽(P)':'⚽') : e.type==='yellow'?'🟨':e.type==='red'?'🟥':'•';
+        return `${icon}${e.player||''}${e.clock?` ${e.clock}`:''}`;
+      });
+      if (evStrs.length) myEvents = `<div class="tf-events">${evStrs.join('・')}</div>`;
+    }
+
+    const roundTxt = roundLabel(m.stage, m.round) + (m.group ? ` ${groupLabel(m.group)}` : '');
+    const dateTxt = fmtTW(m.utcDate).split(' ')[0] || '';
+
+    return `<div class="tf-row ${rowCls}" onclick="analyzeMatch('${m.id}')">
+      <div class="tf-round">${roundTxt}<span class="tf-date">${dateTxt}</span></div>
+      <div class="tf-match">
+        <span class="tf-opp">${isHome?'(主)':'(客)'} vs ${opp.crest||''} ${teamFull(opp.name)}</span>
+        ${scoreDisp}
+        ${resultBadge}
+      </div>
+      ${myEvents}
+    </div>`;
+  }).join('');
+
+  const played = w+d+l;
+  const pts = w*3+d;
+  const summary = played
+    ? `<div class="tf-summary">本屆 ${played} 戰　<b style="color:var(--green-bright)">${w}勝</b> <b style="color:var(--text-secondary)">${d}和</b> <b style="color:var(--red-bright)">${l}負</b>　進 ${gf} / 失 ${ga}　積 ${pts} 分</div>`
+    : '';
+
+  return `<div class="tf-card">
+    <div class="tf-title">📅 本屆賽程戰績（每輪每場）</div>
+    ${summary}
+    ${rows}
+  </div>`;
+}
+
 function renderSquad(teamName) {
   const t = SQUADS[teamName];
   const posOrder = ['GK','DF','MF','FW'];
@@ -4733,6 +4929,9 @@ function renderSquad(teamName) {
       <div class="wc-history-note">${wc.note}</div>
     </div>`;
   }
+
+  // 本屆賽程與戰績卡（每輪每場）
+  html += renderTeamFixtures(teamName);
 
   posOrder.forEach(pos => {
     const players = t.players.filter(p => p.pos === pos);
