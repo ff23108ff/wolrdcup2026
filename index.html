@@ -909,6 +909,22 @@
   }
   .pcs { font-size: 11px; color: var(--text-muted); }
   .pcs span { color: var(--text-primary); font-weight: 600; }
+  /* 球員本屆成績徽章 */
+  .player-card-tour {
+    display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px;
+    padding-top: 6px; border-top: 1px solid var(--pitch-border);
+    font-size: 11px; font-weight: 700;
+  }
+  .pct-goal { color: var(--gold); }
+  .pct-assist { color: var(--green-bright); }
+  .pct-card { color: var(--text-secondary); }
+  .pct-own { color: var(--red-bright); }
+  /* 賽程戰績每場統計摘要 */
+  .tf-ev-count {
+    display: inline-block; font-weight: 700; color: var(--gold);
+    margin-right: 6px;
+  }
+  .tf-ev-list { color: var(--text-secondary); }
 
   /* Player modal */
   .player-modal-bg {
@@ -1688,8 +1704,29 @@ function aggregateRankingsFromEvents() {
   TOURNAMENT_RANKINGS.cards = cardRows;
   TOURNAMENT_RANKINGS.owngoals = Object.keys(owns).length ? toRows(owns, ' 烏龍') : [];
   TOURNAMENT_RANKINGS._live = true;
+
+  // 建立「球員個人本屆成績」總表，供球隊名單查詢（key 用中文名）
+  PLAYER_STATS = {};
+  const ensure = (n) => (PLAYER_STATS[n] = PLAYER_STATS[n] || { goals:0, assists:0, yellow:0, red:0, own:0 });
+  Object.entries(goals).forEach(([n,v]) => ensure(n).goals = v);
+  Object.entries(assists).forEach(([n,v]) => ensure(n).assists = v);
+  Object.entries(yellows).forEach(([n,v]) => ensure(n).yellow = v);
+  Object.entries(reds).forEach(([n,v]) => ensure(n).red = v);
+  Object.entries(owns).forEach(([n,v]) => ensure(n).own = v);
+
   statsCache.computedAt = Date.now();
   return true;
+}
+
+// 球員個人本屆成績總表（由 aggregateRankingsFromEvents 建立，key=中文名）
+let PLAYER_STATS = {};
+
+// 查詢某球員本屆成績（用中文名或英文名比對）
+function getPlayerStats(zhName, enName) {
+  if (PLAYER_STATS[zhName]) return PLAYER_STATS[zhName];
+  // 英文名也試（ESPN 事件可能用英文）
+  if (enName && PLAYER_STATS[enName]) return PLAYER_STATS[enName];
+  return null;
 }
 
 async function fetchBalldontlie() {
@@ -4843,6 +4880,7 @@ function renderTeamFixtures(teamName) {
 
     // 本隊在這場的進球/紅黃牌（從事件中過濾）
     let myEvents = '';
+    let mGoals=0, mYellow=0, mRed=0;
     if (m.events && m.events.length) {
       const mine = m.events.filter(e => {
         // 烏龍球算對方，其餘看 e.team
@@ -4851,9 +4889,20 @@ function renderTeamFixtures(teamName) {
       });
       const evStrs = mine.map(e => {
         const icon = e.type==='goal' ? (e.pen?'⚽(P)':'⚽') : e.type==='yellow'?'🟨':e.type==='red'?'🟥':'•';
+        if (e.type==='goal' && !e.own) mGoals++;
+        else if (e.type==='yellow') mYellow++;
+        else if (e.type==='red') mRed++;
         return `${icon}${e.player||''}${e.clock?` ${e.clock}`:''}`;
       });
-      if (evStrs.length) myEvents = `<div class="tf-events">${evStrs.join('・')}</div>`;
+      if (evStrs.length) {
+        // 本場統計摘要
+        const cnt = [];
+        if (mGoals) cnt.push(`進球 ${mGoals}`);
+        if (mYellow) cnt.push(`🟨${mYellow}`);
+        if (mRed) cnt.push(`🟥${mRed}`);
+        const cntStr = cnt.length ? `<span class="tf-ev-count">本場 ${cnt.join('・')}</span>` : '';
+        myEvents = `<div class="tf-events">${cntStr}<span class="tf-ev-list">${evStrs.join('・')}</span></div>`;
+      }
     }
 
     const roundTxt = roundLabel(m.stage, m.round) + (m.group ? ` ${groupLabel(m.group)}` : '');
@@ -4884,6 +4933,7 @@ function renderTeamFixtures(teamName) {
 }
 
 function renderSquad(teamName) {
+  aggregateRankingsFromEvents();  // 確保 PLAYER_STATS 為最新
   const t = SQUADS[teamName];
   const posOrder = ['GK','DF','MF','FW'];
   const posLabel = {GK:'門將',DF:'後衛',MF:'中場',FW:'前鋒'};
@@ -4899,6 +4949,16 @@ function renderSquad(teamName) {
     const intlGoals = t.players.reduce((s,p)=>s+(p.goals||0),0);
     statsBar += `<div class="squad-stat"><div class="squad-stat-n">${totalCaps}</div><div class="squad-stat-l">總出賽次數</div></div>
       <div class="squad-stat"><div class="squad-stat-n">${intlGoals}</div><div class="squad-stat-l">國際進球</div></div>`;
+  }
+  // 本屆全隊累計進球/助攻
+  let tourGoals = 0, tourAssists = 0;
+  t.players.forEach(p => {
+    const ts = getPlayerStats(p.name, p.en);
+    if (ts) { tourGoals += ts.goals||0; tourAssists += ts.assists||0; }
+  });
+  if (tourGoals || tourAssists) {
+    statsBar += `<div class="squad-stat"><div class="squad-stat-n" style="color:var(--gold)">⚽${tourGoals}</div><div class="squad-stat-l">本屆進球</div></div>
+      <div class="squad-stat"><div class="squad-stat-n" style="color:var(--gold)">🎯${tourAssists}</div><div class="squad-stat-l">本屆助攻</div></div>`;
   }
 
   let html = `<div class="squad-header">
@@ -4945,6 +5005,18 @@ function renderSquad(teamName) {
       const statLine = (p.caps !== undefined)
         ? `<div class="player-card-stats"><span class="pcs">帽 <span>${p.caps}</span></span><span class="pcs">進 <span>${p.goals}</span></span></div>`
         : '';
+      // 本屆個人成績（進球/助攻/紅黃牌）
+      const ts = getPlayerStats(p.name, p.en);
+      let tourLine = '';
+      if (ts && (ts.goals || ts.assists || ts.yellow || ts.red || ts.own)) {
+        const bits = [];
+        if (ts.goals) bits.push(`<span class="pct-goal">⚽${ts.goals}</span>`);
+        if (ts.assists) bits.push(`<span class="pct-assist">🎯${ts.assists}</span>`);
+        if (ts.yellow) bits.push(`<span class="pct-card">🟨${ts.yellow}</span>`);
+        if (ts.red) bits.push(`<span class="pct-card">🟥${ts.red}</span>`);
+        if (ts.own) bits.push(`<span class="pct-own">🥅${ts.own}</span>`);
+        tourLine = `<div class="player-card-tour">${bits.join(' ')}</div>`;
+      }
       html += `<div class="player-card" onclick="openPlayer('${teamName}',${p.num})">
         <div class="player-photo-placeholder">${{'GK':'🧤','DF':'🛡️','MF':'⚙️','FW':'⚽'}[p.pos]}</div>
         <div class="player-card-body">
@@ -4953,6 +5025,7 @@ function renderSquad(teamName) {
           ${sub ? `<div class="player-card-club" style="color:var(--text-muted)">${sub}</div>` : ''}
           ${clubLine}
           ${statLine}
+          ${tourLine}
         </div>
       </div>`;
     });
